@@ -14,10 +14,31 @@ export default function Register() {
 
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [passwordError, setPasswordError] = useState('');
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('register'));
+        post(route('register'), {
+            onSuccess: () => {
+                window.location.href = route('login') + '?status=registration-completed';
+            },
+            onError: (errors) => {
+                if (errors.password) {
+                    setPasswordError(errors.password);
+                }
+            }
+        });
+    };
+
+    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setData('password', value);
+        
+        if (value.length > 0 && value.length < 8) {
+            setPasswordError('Password minimal 8 karakter');
+        } else {
+            setPasswordError('');
+        }
     };
 
     return (
@@ -95,9 +116,9 @@ export default function Register() {
                                     type={showPassword ? 'text' : 'password'}
                                     name="password"
                                     value={data.password}
-                                    className="pl-10 w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                                    className="pl-10 pr-10 w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
                                     autoComplete="new-password"
-                                    onChange={(e) => setData('password', e.target.value)}
+                                    onChange={handlePasswordChange}
                                     required
                                 />
                                 <button
@@ -117,7 +138,23 @@ export default function Register() {
                                     )}
                                 </button>
                             </div>
+                            {passwordError && (
+                                <div className="mt-1 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+                                    <div className="flex items-center space-x-2">
+                                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                        <span>{passwordError}</span>
+                                    </div>
+                                </div>
+                            )}
                             <InputError message={errors.password} className="mt-1" />
+                            <p className="mt-1.5 text-sm text-gray-500 flex items-center space-x-1">
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Password harus minimal 8 karakter</span>
+                            </p>
                         </div>
 
                         {/* Konfirmasi Password */}
