@@ -6,6 +6,11 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\ProdiController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\Admin\PendaftarController;
+use App\Http\Controllers\Admin\PembayaranController;
+use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\LaporanController;
+use App\Http\Controllers\Admin\DashboardController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -84,3 +89,35 @@ Route::get('/about', function () {
 // Route untuk Contact (letakkan di luar middleware group)
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+
+// Route untuk admin
+Route::middleware(['auth'])->prefix('admin')->group(function () {
+    Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
+
+    // Pendaftar
+    Route::get('/pendaftar', [PendaftarController::class, 'index'])->name('admin.pendaftar');
+    Route::put('/pendaftar/{pendaftaran}/status', [PendaftarController::class, 'updateStatus']);
+
+    // Pembayaran
+    Route::get('/pembayaran', [PembayaranController::class, 'index'])->name('admin.pembayaran');
+    Route::put('/pembayaran/{pembayaran}/verify', [PembayaranController::class, 'verify']);
+
+    // Settings
+    Route::get('/settings', [SettingsController::class, 'index'])->name('admin.settings');
+    Route::post('/settings/gelombang', [SettingsController::class, 'storeGelombang']);
+
+    // Laporan
+    Route::get('/laporan', [LaporanController::class, 'index'])->name('admin.laporan');
+    Route::post('/laporan/generate', [LaporanController::class, 'generate']);
+});
+
+// Route untuk user biasa
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', function () {
+        // Jika admin mencoba akses dashboard user, redirect ke admin
+        if (auth()->user()->is_admin) {
+            return redirect('/admin');
+        }
+        return Inertia::render('Dashboard');
+    })->name('dashboard');
+});
