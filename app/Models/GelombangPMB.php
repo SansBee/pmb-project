@@ -14,6 +14,14 @@ class GelombangPMB extends Model
         'tanggal_selesai',
         'kuota',
         'biaya',
-        'aktif'
+        'is_active'
+    ];
+
+    protected $casts = [
+        'tanggal_mulai' => 'date',
+        'tanggal_selesai' => 'date',
+        'is_active' => 'boolean',
+        'kuota' => 'integer',
+        'biaya' => 'integer'
     ];
 } 

@@ -11,9 +11,18 @@ use App\Http\Controllers\Admin\PembayaranController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\LaporanController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\GelombangController;
+use App\Http\Controllers\Admin\BiayaController;
+use App\Http\Controllers\Admin\DokumenController;
+use App\Http\Controllers\Admin\PengumumanController;
+use App\Http\Controllers\Admin\JadwalUjianController;
+use App\Http\Controllers\Admin\FaqController;
+use App\Http\Controllers\Admin\KontakController;
+use App\Http\Controllers\Admin\ProgramStudiController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Middleware\AdminMiddleware;
 
 // Route Utama (Home Page)
 Route::get('/', function () {
@@ -91,27 +100,55 @@ Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
 // Route untuk admin
-Route::middleware(['auth'])->prefix('admin')->group(function () {
+Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->group(function () {
+    // Dashboard Admin
     Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
 
-    // Pendaftar
-    Route::get('/pendaftar', [PendaftarController::class, 'index'])->name('admin.pendaftar');
-    Route::put('/pendaftar/{pendaftaran}/status', [PendaftarController::class, 'updateStatus']);
+    // Dokumen
+    Route::get('/dokumen', [DokumenController::class, 'index'])->name('admin.dokumen');
+    Route::post('/dokumen', [DokumenController::class, 'store'])->name('admin.dokumen');
+    Route::put('/dokumen/{dokumen}', [DokumenController::class, 'update'])->name('admin.dokumen.update');
+    Route::delete('/dokumen/{dokumen}', [DokumenController::class, 'destroy'])->name('admin.dokumen.destroy');
+    Route::post('/dokumen/reorder', [DokumenController::class, 'reorder'])->name('admin.dokumen.reorder');
 
-    // Pembayaran
-    Route::get('/pembayaran', [PembayaranController::class, 'index'])->name('admin.pembayaran');
-    Route::put('/pembayaran/{pembayaran}/verify', [PembayaranController::class, 'verify']);
+    // Gelombang
+    Route::get('/gelombang', [GelombangController::class, 'index'])->name('admin.gelombang');
+    Route::post('/gelombang', [GelombangController::class, 'store'])->name('admin.gelombang');
+    Route::put('/gelombang/{gelombang}', [GelombangController::class, 'update'])->name('admin.gelombang.update');
+    Route::delete('/gelombang/{gelombang}', [GelombangController::class, 'destroy'])->name('admin.gelombang.destroy');
 
-    // Settings
-    Route::get('/settings', [SettingsController::class, 'index'])->name('admin.settings');
-    Route::post('/settings/gelombang', [SettingsController::class, 'storeGelombang']);
+    // Biaya & Pembayaran
+    Route::get('/biaya', [BiayaController::class, 'index'])->name('admin.biaya');
+    Route::post('/biaya', [BiayaController::class, 'store'])->name('admin.biaya');
+    Route::put('/biaya/{biaya}', [BiayaController::class, 'update'])->name('admin.biaya.update');
+    Route::delete('/biaya/{biaya}', [BiayaController::class, 'destroy'])->name('admin.biaya.destroy');
 
-    // Laporan
-    Route::get('/laporan', [LaporanController::class, 'index'])->name('admin.laporan');
-    Route::post('/laporan/generate', [LaporanController::class, 'generate']);
+    // Pengumuman
+    Route::get('/pengumuman', [PengumumanController::class, 'index'])->name('admin.pengumuman');
+    Route::post('/pengumuman', [PengumumanController::class, 'store']);
+    Route::put('/pengumuman/{pengumuman}', [PengumumanController::class, 'update']);
+
+    // Jadwal Ujian
+    Route::get('/jadwal', [JadwalUjianController::class, 'index'])->name('admin.jadwal');
+    Route::post('/jadwal', [JadwalUjianController::class, 'store']);
+    Route::put('/jadwal/{jadwal}', [JadwalUjianController::class, 'update']);
+
+    // FAQ
+    Route::get('/faq', [FaqController::class, 'index'])->name('admin.faq');
+    Route::post('/faq', [FaqController::class, 'store']);
+    Route::put('/faq/{faq}', [FaqController::class, 'update']);
+
+    // Program Studi
+    Route::get('/prodi', [ProgramStudiController::class, 'index'])->name('admin.prodi');
+    Route::post('/prodi', [ProgramStudiController::class, 'store'])->name('admin.prodi.store');
+    Route::put('/prodi/{programStudi}', [ProgramStudiController::class, 'update'])->name('admin.prodi.update');
+    Route::delete('/prodi/{programStudi}', [ProgramStudiController::class, 'destroy'])->name('admin.prodi.destroy');
+
+    // Dokumen
+    Route::post('/admin/dokumen/reorder', [DokumenController::class, 'reorder'])->name('admin.dokumen.reorder');
 });
 
-// Route untuk user biasa
+// Route untuk user biasa (letakkan setelah route admin)
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
         // Jika admin mencoba akses dashboard user, redirect ke admin

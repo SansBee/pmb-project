@@ -1,4 +1,5 @@
 import React from 'react';
+import AdminLayout from '@/Layouts/AdminLayout';
 import { Head } from '@inertiajs/react';
 
 interface GelombangPMB {

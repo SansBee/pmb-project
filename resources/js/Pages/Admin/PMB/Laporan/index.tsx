@@ -1,144 +1,139 @@
-import React from 'react';
+import React, { useState } from 'react';
+import AdminLayout from '@/Layouts/AdminLayout';
 import { Head } from '@inertiajs/react';
+import Filter from './Filter';
 
-export default function LaporanIndex() {
+interface Statistik {
+    total_pendaftar: number;
+    total_diterima: number;
+    total_pembayaran: number;
+    per_prodi: Array<{
+        nama: string;
+        total: number;
+        persentase: number;
+    }>;
+    per_gelombang: Array<{
+        nama_gelombang: string;
+        total: number;
+        persentase: number;
+    }>;
+}
+
+interface Props {
+    statistik: Statistik;
+    filter?: {
+        tanggal_mulai?: string;
+        tanggal_selesai?: string;
+        program_studi_id?: number;
+        gelombang_id?: number;
+        status?: string;
+    };
+}
+
+export default function LaporanIndex({ statistik, filter }: Props) {
+    const [showFilter, setShowFilter] = useState(false);
+
     return (
-        <div className="py-12">
+        <AdminLayout>
             <Head title="Laporan PMB - Admin" />
-
-            <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                {/* Filter Laporan */}
-                <div className="bg-white overflow-hidden shadow-sm rounded-lg mb-6">
-                    <div className="p-6">
-                        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                            Generate Laporan
-                        </h2>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Jenis Laporan
-                                </label>
-                                <select className="w-full px-4 py-2 border rounded-lg">
-                                    <option value="pendaftaran">Laporan Pendaftaran</option>
-                                    <option value="keuangan">Laporan Keuangan</option>
-                                    <option value="statistik">Statistik PMB</option>
-                                    <option value="prodi">Laporan Per Program Studi</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Periode
-                                </label>
-                                <div className="flex gap-2">
-                                    <input 
-                                        type="date" 
-                                        className="w-full px-4 py-2 border rounded-lg"
-                                    />
-                                    <input 
-                                        type="date" 
-                                        className="w-full px-4 py-2 border rounded-lg"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Format Export
-                                </label>
-                                <select className="w-full px-4 py-2 border rounded-lg">
-                                    <option value="excel">Excel</option>
-                                    <option value="pdf">PDF</option>
-                                    <option value="csv">CSV</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="mt-4">
-                            <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-                                Generate Laporan
+            
+            <div className="py-12">
+                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                    {/* Header dengan Filter dan Export */}
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-semibold">Laporan PMB</h2>
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={() => setShowFilter(true)}
+                                className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                            >
+                                Filter
+                            </button>
+                            <button 
+                                onClick={() => window.location.href = route('admin.laporan.export', filter)}
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                            >
+                                Export Excel
                             </button>
                         </div>
                     </div>
-                </div>
 
-                {/* Preview Laporan */}
-                <div className="bg-white overflow-hidden shadow-sm rounded-lg">
-                    <div className="p-6">
-                        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                            Preview Laporan
-                        </h2>
-
-                        {/* Statistik Summary */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                            <div className="bg-gray-50 p-4 rounded-lg">
-                                <div className="text-sm text-gray-500">Total Pendaftar</div>
-                                <div className="text-2xl font-bold">1,234</div>
-                            </div>
-                            
-                            <div className="bg-gray-50 p-4 rounded-lg">
-                                <div className="text-sm text-gray-500">Total Diterima</div>
-                                <div className="text-2xl font-bold">890</div>
-                            </div>
-                            
-                            <div className="bg-gray-50 p-4 rounded-lg">
-                                <div className="text-sm text-gray-500">Total Pembayaran</div>
-                                <div className="text-2xl font-bold">Rp 450.000.000</div>
-                            </div>
-                            
-                            <div className="bg-gray-50 p-4 rounded-lg">
-                                <div className="text-sm text-gray-500">Tingkat Kelulusan</div>
-                                <div className="text-2xl font-bold">72%</div>
+                    {/* Statistik Overview */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div className="bg-white p-6 rounded-lg shadow-sm">
+                            <div className="text-sm text-gray-500">Total Pendaftar</div>
+                            <div className="text-3xl font-bold">{statistik.total_pendaftar}</div>
+                        </div>
+                        <div className="bg-white p-6 rounded-lg shadow-sm">
+                            <div className="text-sm text-gray-500">Total Diterima</div>
+                            <div className="text-3xl font-bold">{statistik.total_diterima}</div>
+                            <div className="text-sm text-gray-500">
+                                ({((statistik.total_diterima / statistik.total_pendaftar) * 100).toFixed(1)}%)
                             </div>
                         </div>
+                        <div className="bg-white p-6 rounded-lg shadow-sm">
+                            <div className="text-sm text-gray-500">Total Pembayaran</div>
+                            <div className="text-3xl font-bold">
+                                Rp {statistik.total_pembayaran.toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
 
-                        {/* Tabel Preview */}
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                            Program Studi
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                            Pendaftar
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                            Diterima
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                            Ditolak
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                            Total Pembayaran
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    <tr>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            Teknik Informatika
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            500
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            350
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            150
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            Rp 175.000.000
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                    {/* Grafik per Program Studi */}
+                    <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
+                        <h3 className="text-lg font-medium mb-4">Pendaftar per Program Studi</h3>
+                        <div className="space-y-4">
+                            {statistik.per_prodi.map((prodi, index) => (
+                                <div key={index}>
+                                    <div className="flex justify-between text-sm mb-1">
+                                        <span>{prodi.nama}</span>
+                                        <span className="text-gray-500">
+                                            {prodi.total} ({prodi.persentase}%)
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <div 
+                                            className="bg-indigo-600 h-2 rounded-full" 
+                                            style={{ width: `${prodi.persentase}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Grafik per Gelombang */}
+                    <div className="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 className="text-lg font-medium mb-4">Pendaftar per Gelombang</h3>
+                        <div className="space-y-4">
+                            {statistik.per_gelombang.map((gelombang, index) => (
+                                <div key={index}>
+                                    <div className="flex justify-between text-sm mb-1">
+                                        <span>{gelombang.nama_gelombang}</span>
+                                        <span className="text-gray-500">
+                                            {gelombang.total} ({gelombang.persentase}%)
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <div 
+                                            className="bg-indigo-600 h-2 rounded-full" 
+                                            style={{ width: `${gelombang.persentase}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+
+            {/* Filter Modal */}
+            {showFilter && (
+                <Filter 
+                    initialFilter={filter}
+                    onClose={() => setShowFilter(false)}
+                />
+            )}
+        </AdminLayout>
     );
 }
