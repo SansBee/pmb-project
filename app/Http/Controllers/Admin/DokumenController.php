@@ -12,8 +12,12 @@ class DokumenController extends Controller
     public function index(Request $request)
     {
         $dokumen = PersyaratanDokumen::query()
-            ->when($request->search, fn($q) => $q->search($request->search))
-            ->when($request->kategori, fn($q) => $q->byKategori($request->kategori))
+            ->when($request->search, function($query, $search) {
+                $query->where('nama_dokumen', 'like', "%{$search}%");
+            })
+            ->when($request->kategori, function($query, $kategori) {
+                $query->where('kategori', $kategori);
+            })
             ->orderBy('kategori')
             ->orderBy('urutan')
             ->get()
@@ -26,12 +30,15 @@ class DokumenController extends Controller
                 ];
             });
         
-        return Inertia::render('Admin/PMB/Dokumen/index', [
+        return Inertia::render('Admin/PMB/Dokumen/Index', [
             'dokumen' => $dokumen,
             'kategori_list' => PersyaratanDokumen::KATEGORI,
             'format_list' => PersyaratanDokumen::FORMAT_FILE,
             'size_type_list' => PersyaratanDokumen::SIZE_TYPE,
-            'filters' => $request->only(['search', 'kategori'])
+            'filters' => [
+                'search' => $request->search,
+                'kategori' => $request->kategori
+            ]
         ]);
     }
 
@@ -40,19 +47,13 @@ class DokumenController extends Controller
         $request->validate([
             'nama_dokumen' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
-            'kategori' => 'required|in:' . implode(',', array_keys(PersyaratanDokumen::KATEGORI)),
-            'format_file' => 'required',
+            'kategori' => 'required|string',
+            'format_file' => 'required|string',
             'max_size' => 'required|integer|min:1',
             'size_type' => 'required|in:KB,MB',
             'is_wajib' => 'boolean',
             'is_active' => 'boolean'
         ]);
-
-        // Validasi format file secara manual
-        $validFormats = array_keys(PersyaratanDokumen::FORMAT_FILE);
-        if (!in_array($request->format_file, $validFormats)) {
-            return redirect()->back()->withErrors(['format_file' => 'Format file tidak valid']);
-        }
 
         // Set urutan berdasarkan kategori
         $lastUrutan = PersyaratanDokumen::where('kategori', $request->kategori)
@@ -66,33 +67,31 @@ class DokumenController extends Controller
         return redirect()->back()->with('message', 'Dokumen berhasil ditambahkan');
     }
 
-    public function update(Request $request, PersyaratanDokumen $dokumen)
+    public function update(Request $request, $id)
     {
+        $dokumen = PersyaratanDokumen::findOrFail($id);
+
         $request->validate([
             'nama_dokumen' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
-            'kategori' => 'required|in:' . implode(',', array_keys(PersyaratanDokumen::KATEGORI)),
-            'format_file' => 'required',
+            'kategori' => 'required|string',
+            'format_file' => 'required|string',
             'max_size' => 'required|integer|min:1',
             'size_type' => 'required|in:KB,MB',
             'is_wajib' => 'boolean',
             'is_active' => 'boolean'
         ]);
 
-        // Validasi format file secara manual
-        $validFormats = array_keys(PersyaratanDokumen::FORMAT_FILE);
-        if (!in_array($request->format_file, $validFormats)) {
-            return redirect()->back()->withErrors(['format_file' => 'Format file tidak valid']);
-        }
-
         $dokumen->update($request->all());
 
         return redirect()->back()->with('message', 'Dokumen berhasil diupdate');
     }
 
-    public function destroy(PersyaratanDokumen $dokumen)
+    public function destroy($id)
     {
+        $dokumen = PersyaratanDokumen::findOrFail($id);
         $dokumen->delete();
+        
         return redirect()->back()->with('message', 'Dokumen berhasil dihapus');
     }
 

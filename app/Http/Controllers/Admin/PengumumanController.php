@@ -13,7 +13,7 @@ class PengumumanController extends Controller
     {
         $pengumuman = Pengumuman::orderBy('tanggal_publikasi', 'desc')->get();
 
-        return Inertia::render('Admin/PMB/Pengumuman/index', [
+        return Inertia::render('Admin/PMB/Pengumuman/Index', [
             'pengumuman' => $pengumuman
         ]);
     }

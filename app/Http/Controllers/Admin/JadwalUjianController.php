@@ -15,7 +15,7 @@ class JadwalUjianController extends Controller
         $jadwal = JadwalUjian::with('gelombang')->get();
         $gelombang = GelombangPMB::where('is_active', true)->get();
 
-        return Inertia::render('Admin/PMB/JadwalUjian/index', [
+        return Inertia::render('Admin/PMB/JadwalUjian/Index', [
             'jadwal' => $jadwal,
             'gelombang' => $gelombang
         ]);

@@ -13,7 +13,7 @@ class GelombangController extends Controller
     {
         $gelombang = GelombangPMB::orderBy('tanggal_mulai')->get();
         
-        return Inertia::render('Admin/PMB/Gelombang/index', [
+        return Inertia::render('Admin/PMB/Gelombang/Index', [
             'gelombang' => $gelombang
         ]);
     }
@@ -34,8 +34,10 @@ class GelombangController extends Controller
         return redirect()->back()->with('message', 'Gelombang berhasil ditambahkan');
     }
 
-    public function update(Request $request, GelombangPMB $gelombang)
+    public function update(Request $request, $id)
     {
+        $gelombang = GelombangPMB::findOrFail($id);
+        
         $request->validate([
             'nama_gelombang' => 'required|string|max:255',
             'tanggal_mulai' => 'required|date',
@@ -50,8 +52,10 @@ class GelombangController extends Controller
         return redirect()->back()->with('message', 'Gelombang berhasil diupdate');
     }
 
-    public function destroy(GelombangPMB $gelombang)
+    public function destroy($id)
     {
+        $gelombang = GelombangPMB::findOrFail($id);
+        
         try {
             $gelombang->delete();
             return redirect()->back()->with('message', 'Gelombang berhasil dihapus');

@@ -13,7 +13,7 @@ class KontakController extends Controller
     {
         $kontak = KontakInformasi::all();
 
-        return Inertia::render('Admin/PMB/Kontak/index', [
+        return Inertia::render('Admin/PMB/Kontak/Index', [
             'kontak' => $kontak
         ]);
     }

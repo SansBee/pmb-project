@@ -19,7 +19,7 @@ class PendaftarController extends Controller
 
         $program_studi = ProgramStudi::all();
 
-        return Inertia::render('Admin/PMB/Pendaftar/index', [
+        return Inertia::render('Admin/PMB/Pendaftar/Index', [
             'pendaftar' => $pendaftar,
             'program_studi' => $program_studi
         ]);

@@ -15,7 +15,7 @@ class FaqController extends Controller
         $faq = Faq::with('kategori')->orderBy('urutan')->get();
         $kategori = FaqKategori::orderBy('urutan')->get();
 
-        return Inertia::render('Admin/PMB/Faq/index', [
+        return Inertia::render('Admin/PMB/Faq/Index', [
             'faq' => $faq,
             'kategori' => $kategori
         ]);

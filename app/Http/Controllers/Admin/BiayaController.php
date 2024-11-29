@@ -20,7 +20,7 @@ class BiayaController extends Controller
             ->map(function($item) {
                 return [
                     ...array_merge($item->toArray(), [
-                        'nominal_rupiah' => $item->nominal_rupiah
+                        'nominal_rupiah' => 'Rp ' . number_format($item->nominal, 0, ',', '.')
                     ])
                 ];
             });
@@ -28,7 +28,7 @@ class BiayaController extends Controller
         $program_studi = ProgramStudi::where('is_active', true)->get();
         $gelombang = GelombangPMB::where('is_active', true)->get();
 
-        return Inertia::render('Admin/PMB/Biaya/index', [
+        return Inertia::render('Admin/PMB/Biaya/Index', [
             'biaya' => $biaya,
             'program_studi' => $program_studi,
             'gelombang' => $gelombang,
@@ -52,8 +52,10 @@ class BiayaController extends Controller
         return redirect()->back()->with('message', 'Biaya berhasil ditambahkan');
     }
 
-    public function update(Request $request, BiayaPendaftaran $biaya)
+    public function update(Request $request, $id)
     {
+        $biaya = BiayaPendaftaran::findOrFail($id);
+
         $request->validate([
             'program_studi_id' => 'required|exists:program_studi,id',
             'gelombang_id' => 'nullable|exists:gelombang_pmb,id',
@@ -68,9 +70,11 @@ class BiayaController extends Controller
         return redirect()->back()->with('message', 'Biaya berhasil diupdate');
     }
 
-    public function destroy(BiayaPendaftaran $biaya)
+    public function destroy($id)
     {
+        $biaya = BiayaPendaftaran::findOrFail($id);
         $biaya->delete();
+
         return redirect()->back()->with('message', 'Biaya berhasil dihapus');
     }
 } 

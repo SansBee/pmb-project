@@ -14,9 +14,4 @@ class ProgramStudi extends Model
         'kuota',
         'is_active'
     ];
-
-    protected $casts = [
-        'is_active' => 'boolean',
-        'kuota' => 'integer'
-    ];
 } 
