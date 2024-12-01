@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Pendaftaran extends Model
 {
     protected $table = 'pendaftaran';
-    
+
     protected $fillable = [
         'user_id',
         'nama_lengkap',
@@ -22,8 +22,5 @@ class Pendaftaran extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function pembayaran()
-    {
-        return $this->hasOne(Pembayaran::class);
-    }
+    // Tidak perlu relasi ke program_studi karena disimpan sebagai string
 } 

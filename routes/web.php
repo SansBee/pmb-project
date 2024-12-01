@@ -129,7 +129,7 @@ Route::get('/about', function () {
 })->name('about');
 
 Route::get('/pmb', function () {
-    return Inertia::render('Pmb/index');
+    return Inertia::render('PMB/Index');
 })->name('pmb');    
 
 // Route untuk Contact (letakkan di luar middleware group)

@@ -24,4 +24,10 @@ class GelombangPMB extends Model
         'kuota' => 'integer',
         'biaya' => 'integer'
     ];
+
+    // Tambahkan relasi ke pendaftar
+    public function pendaftar()
+    {
+        return $this->hasMany(User::class, 'gelombang_id');
+    }
 } 

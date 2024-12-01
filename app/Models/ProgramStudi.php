@@ -14,4 +14,10 @@ class ProgramStudi extends Model
         'kuota',
         'is_active'
     ];
+
+    // Tambahkan relasi ke pendaftar (users)
+    public function pendaftar()
+    {
+        return $this->hasMany(User::class, 'program_studi_id');
+    }
 } 

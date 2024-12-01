@@ -22,7 +22,10 @@ class User extends Authenticatable
         'email',
         'password',
         'program_studi_id',
+        'gelombang_id',
         'is_admin',
+        'status_pendaftaran',
+        'status_pembayaran'
     ];
 
     /**
@@ -50,6 +53,31 @@ class User extends Authenticatable
 
     public function programStudi()
     {
-        return $this->belongsTo(ProgramStudi::class);
+        return $this->belongsTo(ProgramStudi::class, 'program_studi_id');
     }
+
+    public function gelombang()
+    {
+        return $this->belongsTo(GelombangPMB::class, 'gelombang_id');
+    }
+
+    public function pendaftaran()
+    {
+        return $this->hasOne(Pendaftaran::class);
+    }
+
+    // Tambahkan konstanta untuk status
+    const STATUS_PENDAFTARAN = [
+        'baru' => 'Pendaftar Baru',
+        'verifikasi' => 'Sedang Diverifikasi',
+        'diterima' => 'Diterima',
+        'ditolak' => 'Ditolak'
+    ];
+
+    const STATUS_PEMBAYARAN = [
+        'belum_bayar' => 'Belum Bayar',
+        'menunggu_verifikasi' => 'Menunggu Verifikasi',
+        'lunas' => 'Lunas',
+        'ditolak' => 'Ditolak'
+    ];
 }

@@ -9,15 +9,16 @@ class Pembayaran extends Model
     protected $table = 'pembayaran';
     
     protected $fillable = [
-        'pendaftaran_id',
+        'pendaftar_id',
         'jumlah',
         'metode_pembayaran',
         'bukti_pembayaran',
-        'status'
+        'status',
+        'catatan'
     ];
 
-    public function pendaftaran()
+    public function pendaftar()
     {
-        return $this->belongsTo(Pendaftaran::class);
+        return $this->belongsTo(User::class, 'pendaftar_id');
     }
 } 

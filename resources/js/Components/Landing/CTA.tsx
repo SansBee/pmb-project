@@ -34,7 +34,7 @@ export default function CTA() {
                         className="mt-8 flex justify-center space-x-4"
                     >
                         <Link
-                            href="/pmb/register"
+                            href="/login"
                             className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50 transition-all duration-300"
                         >
                             Daftar PMB

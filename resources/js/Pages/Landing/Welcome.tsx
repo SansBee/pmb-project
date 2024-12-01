@@ -47,12 +47,6 @@ export default function Welcome() {
             <FAQ />
             <CTA />
             <LiveChat />
-            <Link 
-                href={route('login')} 
-                className="..."
-            >
-                Login
-            </Link>
         </LandingLayout>
     );
 }

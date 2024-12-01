@@ -7,8 +7,9 @@ interface Pendaftar {
     name: string;
     email: string;
     program_studi: {
+        id: number;
         nama: string;
-    };
+    } | null;
     status_pendaftaran: string;
     status_pembayaran: string;
     created_at: string;
@@ -22,9 +23,14 @@ interface Props {
         to: number;
         total: number;
     };
+    filters: {
+        search: string;
+        status: string;
+    };
+    status_list: Record<string, string>;
 }
 
-export default function PendaftarIndex({ pendaftar }: Props) {
+export default function PendaftarIndex({ pendaftar, filters, status_list }: Props) {
     return (
         <AdminLayout>
             <Head title="Pendaftar - Admin" />
@@ -88,7 +94,7 @@ export default function PendaftarIndex({ pendaftar }: Props) {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="text-sm text-gray-900">
-                                                        {item.program_studi.nama}
+                                                        {item.program_studi?.nama || 'Belum memilih prodi'}
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
@@ -99,7 +105,7 @@ export default function PendaftarIndex({ pendaftar }: Props) {
                                                         ? 'bg-red-100 text-red-800'
                                                         : 'bg-yellow-100 text-yellow-800'
                                                     }`}>
-                                                        {item.status_pendaftaran}
+                                                        {status_list[item.status_pendaftaran] || item.status_pendaftaran}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">

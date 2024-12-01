@@ -11,14 +11,7 @@ class DokumenController extends Controller
 {
     public function index(Request $request)
     {
-        $dokumen = PersyaratanDokumen::query()
-            ->when($request->search, function($query, $search) {
-                $query->where('nama_dokumen', 'like', "%{$search}%");
-            })
-            ->when($request->kategori, function($query, $kategori) {
-                $query->where('kategori', $kategori);
-            })
-            ->orderBy('kategori')
+        $dokumen = PersyaratanDokumen::orderBy('kategori')
             ->orderBy('urutan')
             ->get()
             ->map(function($doc) {

@@ -18,7 +18,7 @@ class FaqKategori extends Model
         'is_active' => 'boolean'
     ];
 
-    public function faqs()
+    public function faq()
     {
         return $this->hasMany(Faq::class, 'kategori_id');
     }

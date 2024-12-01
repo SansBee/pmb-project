@@ -12,8 +12,12 @@ class FaqController extends Controller
 {
     public function index()
     {
-        $faq = Faq::with('kategori')->orderBy('urutan')->get();
-        $kategori = FaqKategori::orderBy('urutan')->get();
+        $faq = Faq::with('kategori')
+            ->orderBy('urutan')
+            ->get();
+        
+        $kategori = FaqKategori::orderBy('urutan')
+            ->get();
 
         return Inertia::render('Admin/PMB/Faq/Index', [
             'faq' => $faq,
@@ -21,25 +25,14 @@ class FaqController extends Controller
         ]);
     }
 
-    public function storeKategori(Request $request)
-    {
-        $request->validate([
-            'nama_kategori' => 'required',
-            'urutan' => 'required|numeric'
-        ]);
-
-        FaqKategori::create($request->all());
-
-        return redirect()->back()->with('message', 'Kategori FAQ berhasil ditambahkan');
-    }
-
-    public function storeFaq(Request $request)
+    public function store(Request $request)
     {
         $request->validate([
             'kategori_id' => 'required|exists:faq_kategori,id',
-            'pertanyaan' => 'required',
-            'jawaban' => 'required',
-            'urutan' => 'required|numeric'
+            'pertanyaan' => 'required|string',
+            'jawaban' => 'required|string',
+            'urutan' => 'required|integer|min:0',
+            'is_active' => 'boolean'
         ]);
 
         Faq::create($request->all());
@@ -47,11 +40,16 @@ class FaqController extends Controller
         return redirect()->back()->with('message', 'FAQ berhasil ditambahkan');
     }
 
-    public function update(Request $request, Faq $faq)
+    public function update(Request $request, $id)
     {
+        $faq = Faq::findOrFail($id);
+
         $request->validate([
-            'pertanyaan' => 'required',
-            'jawaban' => 'required'
+            'kategori_id' => 'required|exists:faq_kategori,id',
+            'pertanyaan' => 'required|string',
+            'jawaban' => 'required|string',
+            'urutan' => 'required|integer|min:0',
+            'is_active' => 'boolean'
         ]);
 
         $faq->update($request->all());
@@ -59,9 +57,11 @@ class FaqController extends Controller
         return redirect()->back()->with('message', 'FAQ berhasil diupdate');
     }
 
-    public function destroy(Faq $faq)
+    public function destroy($id)
     {
+        $faq = Faq::findOrFail($id);
         $faq->delete();
+
         return redirect()->back()->with('message', 'FAQ berhasil dihapus');
     }
 } 
