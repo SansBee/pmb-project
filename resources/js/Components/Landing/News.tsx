@@ -1,31 +1,34 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 
-export default function News() {
+interface Berita {
+    title: string;
+    category: string;
+    date: string;
+    image: string;
+    excerpt: string;
+}
+
+interface Props {
+    berita: Berita[];
+    kategori_berita: Record<string, string>;
+}
+
+export default function News({ berita = [], kategori_berita = {} }: Props) {
+    console.log('News Component:', {
+        receivedBerita: berita,
+        receivedKategori: kategori_berita,
+        beritaLength: berita.length,
+        isArray: Array.isArray(berita),
+        firstItem: berita[0],
+        kategoriKeys: Object.keys(kategori_berita)
+    });
+
     const [selectedCategory, setSelectedCategory] = useState('all');
     
-    const news = [
-        {
-            title: 'Penerimaan Mahasiswa Baru 2024',
-            category: 'pmb',
-            date: '2024-03-15',
-            image: '/images/news/pmb.jpg',
-            excerpt: 'Pendaftaran mahasiswa baru tahun akademik 2024/2025 telah dibuka.'
-        },
-        {
-            title: 'Prestasi Mahasiswa di Kompetisi Nasional',
-            category: 'prestasi',
-            date: '2024-03-10',
-            image: '/images/news/prestasi.jpg',
-            excerpt: 'Tim mahasiswa meraih juara dalam kompetisi programming nasional.'
-        }
-    ];
-
     const categories = [
         { id: 'all', name: 'Semua' },
-        { id: 'pmb', name: 'PMB' },
-        { id: 'prestasi', name: 'Prestasi' },
-        { id: 'akademik', name: 'Akademik' }
+        ...Object.entries(kategori_berita || {}).map(([id, name]) => ({ id, name }))
     ];
 
     return (
@@ -53,37 +56,43 @@ export default function News() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {news
-                        .filter(item => selectedCategory === 'all' || item.category === selectedCategory)
-                        .map((item, index) => (
-                            <motion.div
-                                key={index}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5, delay: index * 0.1 }}
-                                className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"
-                            >
-                                <img 
-                                    src={item.image} 
-                                    alt={item.title}
-                                    className="w-full h-48 object-cover"
-                                />
-                                <div className="p-6">
-                                    <div className="text-sm text-indigo-600 dark:text-indigo-400 mb-2">
-                                        {item.date}
+                    {berita.length > 0 ? (
+                        berita
+                            .filter(item => selectedCategory === 'all' || item.category === selectedCategory)
+                            .map((item, index) => (
+                                <motion.div
+                                    key={index}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                                    className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"
+                                >
+                                    <img 
+                                        src={item.image} 
+                                        alt={item.title}
+                                        className="w-full h-48 object-cover"
+                                    />
+                                    <div className="p-6">
+                                        <div className="text-sm text-indigo-600 dark:text-indigo-400 mb-2">
+                                            {item.date}
+                                        </div>
+                                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                                            {item.title}
+                                        </h3>
+                                        <p className="text-gray-600 dark:text-gray-300 mb-4">
+                                            {item.excerpt}
+                                        </p>
+                                        <button className="text-indigo-600 dark:text-indigo-400 font-medium hover:text-indigo-500">
+                                            Baca selengkapnya →
+                                        </button>
                                     </div>
-                                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                                        {item.title}
-                                    </h3>
-                                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                                        {item.excerpt}
-                                    </p>
-                                    <button className="text-indigo-600 dark:text-indigo-400 font-medium hover:text-indigo-500">
-                                        Baca selengkapnya →
-                                    </button>
-                                </div>
-                            </motion.div>
-                        ))}
+                                </motion.div>
+                            ))
+                    ) : (
+                        <div className="col-span-3 text-center text-gray-500">
+                            Belum ada berita
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -16,7 +16,20 @@ import News from '@/Components/Landing/News';
 import Announcement from '@/Components/Announcement';
 import { Link } from '@inertiajs/react';
 
-export default function Welcome() {
+interface Props {
+    berita: {
+        title: string;
+        category: string;
+        date: string;
+        image: string;
+        excerpt: string;
+    }[];
+    kategori_berita: Record<string, string>;
+}
+
+export default function Welcome({ berita, kategori_berita }: Props) {
+    console.log('Welcome props:', { berita, kategori_berita });
+    
     return (
         <LandingLayout>
             <Head title="Welcome" />
@@ -40,7 +53,10 @@ export default function Welcome() {
             <Features />
             <Stats />
             <WhyChooseUs />
-            <News />
+            <News 
+                berita={berita} 
+                kategori_berita={kategori_berita} 
+            />
             <Achievements />
             <Testimonials />
             <AcademicCalendar />

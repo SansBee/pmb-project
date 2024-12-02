@@ -19,15 +19,14 @@ use App\Http\Controllers\Admin\JadwalUjianController;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\KontakController;
 use App\Http\Controllers\Admin\ProgramStudiController;
+use App\Http\Controllers\Admin\BeritaController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Middleware\AdminMiddleware;
 
 // Route Utama (Home Page)
-Route::get('/', function () {
-    return Inertia::render('Landing/Welcome');
-})->name('welcome');
+Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
 
 // Kelompokkan route untuk guest
 Route::middleware('guest')->group(function () {
@@ -103,6 +102,12 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->group(func
     // Laporan
     Route::get('Laporan', [LaporanController::class, 'index'])->name('admin.laporan');
     Route::get('/Laporan/export', [LaporanController::class, 'export'])->name('admin.laporan.export');
+
+    // Berita routes
+    Route::get('/berita', [BeritaController::class, 'index'])->name('admin.berita');
+    Route::post('/berita', [BeritaController::class, 'store'])->name('admin.berita.store');
+    Route::put('/berita/{id}', [BeritaController::class, 'update'])->name('admin.berita.update');
+    Route::delete('/berita/{id}', [BeritaController::class, 'destroy'])->name('admin.berita.destroy');
 });
 
 // Route untuk user biasa
