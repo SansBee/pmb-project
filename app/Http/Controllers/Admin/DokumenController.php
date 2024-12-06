@@ -11,27 +11,41 @@ class DokumenController extends Controller
 {
     public function index(Request $request)
     {
-        $dokumen = PersyaratanDokumen::orderBy('kategori')
-            ->orderBy('urutan')
-            ->get()
-            ->map(function($doc) {
-                return [
-                    ...$doc->toArray(),
-                    'formatted_size' => $doc->formatted_size,
-                    'format_description' => $doc->format_description,
-                    'format_example' => $doc->format_example
-                ];
+        $query = PersyaratanDokumen::query();
+
+        // Filter pencarian
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nama_dokumen', 'like', "%{$search}%")
+                  ->orWhere('deskripsi', 'like', "%{$search}%");
             });
-        
+        }
+
+        // Filter kategori
+        if ($request->filled('kategori')) {
+            $query->where('kategori', $request->kategori);
+        }
+
+        // Urutkan berdasarkan kategori dan urutan
+        $dokumen = $query->orderBy('kategori')
+                        ->orderBy('urutan')
+                        ->get()
+                        ->map(function($doc) {
+                            return [
+                                ...$doc->toArray(),
+                                'formatted_size' => $doc->formatted_size,
+                                'format_description' => $doc->format_description,
+                                'format_example' => $doc->format_example
+                            ];
+                        });
+
         return Inertia::render('Admin/PMB/Dokumen/Index', [
             'dokumen' => $dokumen,
             'kategori_list' => PersyaratanDokumen::KATEGORI,
             'format_list' => PersyaratanDokumen::FORMAT_FILE,
             'size_type_list' => PersyaratanDokumen::SIZE_TYPE,
-            'filters' => [
-                'search' => $request->search,
-                'kategori' => $request->kategori
-            ]
+            'filters' => $request->only(['search', 'kategori'])
         ]);
     }
 

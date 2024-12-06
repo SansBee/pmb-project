@@ -25,8 +25,8 @@ class Berita extends Model
     ];
 
     const KATEGORI = [
-        'pmb' => 'PMB',
-        'prestasi' => 'Prestasi',
-        'akademik' => 'Akademik'
+        'berita' => 'Berita',
+        'event' => 'Event',
+        'pengumuman' => 'Pengumuman'
     ];
 } 

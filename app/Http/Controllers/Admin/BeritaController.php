@@ -3,27 +3,18 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Berita;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use App\Models\Berita;
 use Inertia\Inertia;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class BeritaController extends Controller
 {
     public function index()
     {
-        $berita = Berita::orderBy('tanggal_publikasi', 'desc')
-            ->get()
-            ->map(function($item) {
-                return [
-                    'id' => $item->id,
-                    'judul' => $item->judul,
-                    'kategori' => $item->kategori,
-                    'tanggal_publikasi' => $item->tanggal_publikasi->format('Y-m-d'),
-                    'is_active' => $item->is_active
-                ];
-            });
-
+        $berita = Berita::orderBy('tanggal_publikasi', 'desc')->get();
         return Inertia::render('Admin/PMB/Berita/Index', [
             'berita' => $berita,
             'kategori' => Berita::KATEGORI
@@ -32,29 +23,25 @@ class BeritaController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'judul' => 'required|string|max:255',
             'kategori' => 'required|string',
             'excerpt' => 'required|string',
             'konten' => 'required|string',
-            'gambar' => 'required|image',
+            'gambar' => 'required|image|mimes:jpeg,png,jpg|max:10240',
             'tanggal_publikasi' => 'required|date',
             'is_active' => 'boolean'
         ]);
 
-        // Handle gambar upload
-        $gambar = $request->file('gambar')->store('berita', 'public');
+        if ($request->hasFile('gambar')) {
+            $gambar = $request->file('gambar');
+            $path = $gambar->store('berita', 'public');
+            $validated['gambar'] = $path;
+        }
 
-        Berita::create([
-            'judul' => $request->judul,
-            'slug' => Str::slug($request->judul),
-            'kategori' => $request->kategori,
-            'excerpt' => $request->excerpt,
-            'konten' => $request->konten,
-            'gambar' => $gambar,
-            'tanggal_publikasi' => $request->tanggal_publikasi,
-            'is_active' => $request->is_active ?? true
-        ]);
+        $validated['slug'] = Str::slug($validated['judul']);
+        
+        Berita::create($validated);
 
         return redirect()->back()->with('message', 'Berita berhasil ditambahkan');
     }
@@ -63,33 +50,47 @@ class BeritaController extends Controller
     {
         $berita = Berita::findOrFail($id);
 
-        $request->validate([
+        $rules = [
             'judul' => 'required|string|max:255',
-            'kategori' => 'required|string',
+            'kategori' => 'required|string|in:' . implode(',', array_keys(Berita::KATEGORI)),
             'excerpt' => 'required|string',
             'konten' => 'required|string',
-            'gambar' => 'nullable|image',
             'tanggal_publikasi' => 'required|date',
             'is_active' => 'boolean'
-        ]);
+        ];
 
-        $data = $request->except('gambar');
-        
-        // Handle gambar upload jika ada
         if ($request->hasFile('gambar')) {
-            $data['gambar'] = $request->file('gambar')->store('berita', 'public');
+            $rules['gambar'] = 'image|mimes:jpeg,png,jpg|max:10240';
         }
 
-        $berita->update($data);
+        $validated = $request->validate($rules);
 
-        return redirect()->back()->with('message', 'Berita berhasil diupdate');
+        if ($request->hasFile('gambar')) {
+            if ($berita->gambar) {
+                Storage::disk('public')->delete($berita->gambar);
+            }
+            
+            $gambar = $request->file('gambar');
+            $path = $gambar->store('berita', 'public');
+            $validated['gambar'] = $path;
+        }
+
+        $validated['slug'] = Str::slug($validated['judul']);
+        
+        $berita->update($validated);
+
+        return redirect()->back()->with('message', 'Berita berhasil diperbarui');
     }
 
     public function destroy($id)
     {
         $berita = Berita::findOrFail($id);
-        $berita->delete();
 
+        if ($berita->gambar) {
+            Storage::disk('public')->delete($berita->gambar);
+        }
+
+        $berita->delete();
         return redirect()->back()->with('message', 'Berita berhasil dihapus');
     }
 } 

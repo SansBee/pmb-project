@@ -26,9 +26,10 @@ export default function Form({ isEdit = false, programStudi, onClose }: Props) {
         
         if (isEdit && programStudi) {
             put(route('admin.prodi.update', programStudi.id), {
+                preserveScroll: true,
+                preserveState: true,
                 onSuccess: () => {
                     onClose();
-                    // Optional: Tambahkan callback untuk refresh data
                 },
                 onError: (errors) => {
                     console.error(errors);
@@ -36,9 +37,10 @@ export default function Form({ isEdit = false, programStudi, onClose }: Props) {
             });
         } else {
             post(route('admin.prodi.store'), {
+                preserveScroll: true,
+                preserveState: true,
                 onSuccess: () => {
                     onClose();
-                    // Optional: Tambahkan callback untuk refresh data
                 },
                 onError: (errors) => {
                     console.error(errors);
@@ -65,6 +67,7 @@ export default function Form({ isEdit = false, programStudi, onClose }: Props) {
                                 value={data.nama}
                                 onChange={e => setData('nama', e.target.value)}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                required
                             />
                             {errors.nama && (
                                 <div className="text-red-500 text-sm mt-1">{errors.nama}</div>
@@ -80,6 +83,8 @@ export default function Form({ isEdit = false, programStudi, onClose }: Props) {
                                 onChange={e => setData('deskripsi', e.target.value)}
                                 rows={4}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                required
+                                placeholder="Masukkan deskripsi program studi..."
                             />
                             {errors.deskripsi && (
                                 <div className="text-red-500 text-sm mt-1">{errors.deskripsi}</div>
@@ -96,6 +101,7 @@ export default function Form({ isEdit = false, programStudi, onClose }: Props) {
                                 onChange={e => setData('kuota', Number(e.target.value))}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 min="0"
+                                required
                             />
                             {errors.kuota && (
                                 <div className="text-red-500 text-sm mt-1">{errors.kuota}</div>

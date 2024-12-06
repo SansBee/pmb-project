@@ -36,6 +36,8 @@ export default function ProgramStudiIndex({ program_studi }: Props) {
     const confirmDelete = () => {
         if (itemToDelete) {
             router.delete(route('admin.prodi.destroy', itemToDelete), {
+                preserveScroll: true,
+                preserveState: true,
                 onSuccess: () => {
                     setDeleteConfirmation(false);
                     setItemToDelete(null);
@@ -56,6 +58,7 @@ export default function ProgramStudiIndex({ program_studi }: Props) {
                             <Alert
                                 type="success"
                                 message={flash.message}
+                                duration={5000}
                             />
                         </div>
                     )}
@@ -65,6 +68,7 @@ export default function ProgramStudiIndex({ program_studi }: Props) {
                             <Alert
                                 type="error"
                                 message={flash.error}
+                                duration={5000}
                             />
                         </div>
                     )}

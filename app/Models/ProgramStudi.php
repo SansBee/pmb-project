@@ -15,6 +15,11 @@ class ProgramStudi extends Model
         'is_active'
     ];
 
+    protected $casts = [
+        'is_active' => 'boolean',
+        'kuota' => 'integer'
+    ];
+
     // Tambahkan relasi ke pendaftar (users)
     public function pendaftar()
     {

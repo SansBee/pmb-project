@@ -27,6 +27,27 @@ export default function BeritaIndex({ berita, kategori, flash }: Props) {
     const [deleteConfirmation, setDeleteConfirmation] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<number | null>(null);
 
+    const confirmDelete = () => {
+        if (itemToDelete) {
+            router.delete(route('admin.berita.destroy', itemToDelete), {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    // Tutup modal konfirmasi hapus
+                    setDeleteConfirmation(false);
+                    // Reset item yang akan dihapus
+                    setItemToDelete(null);
+                },
+                onError: (errors) => {
+                    console.error(errors);
+                    // Jika error, tetap tutup modal
+                    setDeleteConfirmation(false);
+                    setItemToDelete(null);
+                }
+            });
+        }
+    };
+
     return (
         <AdminLayout>
             <Head title="Berita & Event - Admin" />
@@ -142,11 +163,7 @@ export default function BeritaIndex({ berita, kategori, flash }: Props) {
                     setDeleteConfirmation(false);
                     setItemToDelete(null);
                 }}
-                onConfirm={() => {
-                    if (itemToDelete) {
-                        router.delete(route('admin.berita.destroy', itemToDelete));
-                    }
-                }}
+                onConfirm={confirmDelete}
                 title="Hapus Berita"
                 message="Apakah Anda yakin ingin menghapus berita ini?"
             />

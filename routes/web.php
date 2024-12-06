@@ -24,6 +24,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Middleware\AdminMiddleware;
+use Illuminate\Support\Facades\Auth;
 
 // Route Utama (Home Page)
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
@@ -47,12 +48,10 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->group(func
     Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
 
     // Program Studi (sudah ada)
-    Route::resource('prodi', ProgramStudiController::class)->names([
-        'index' => 'admin.prodi',
-        'store' => 'admin.prodi.store',
-        'update' => 'admin.prodi.update',
-        'destroy' => 'admin.prodi.destroy',
-    ]);
+    Route::get('/prodi', [ProgramStudiController::class, 'index'])->name('admin.prodi');
+    Route::post('/prodi', [ProgramStudiController::class, 'store'])->name('admin.prodi.store');
+    Route::put('/prodi/{id}', [ProgramStudiController::class, 'update'])->name('admin.prodi.update');
+    Route::delete('/prodi/{id}', [ProgramStudiController::class, 'destroy'])->name('admin.prodi.destroy');
 
     // Gelombang PMB routes
     Route::get('/Gelombang', [GelombangController::class, 'index'])->name('admin.gelombang');
@@ -113,7 +112,7 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin')->group(func
 // Route untuk user biasa
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
-        if (auth()->user()->is_admin) {
+        if (Auth::user()->is_admin) {
             return redirect('/admin');
         }
         return Inertia::render('Dashboard');

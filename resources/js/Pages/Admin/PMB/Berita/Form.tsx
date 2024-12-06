@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useForm } from '@inertiajs/react';
+import { useForm, router } from '@inertiajs/react';
 import Modal from '@/Components/Modal';
 
 interface Props {
@@ -17,6 +17,10 @@ interface Props {
     onClose: () => void;
 }
 
+interface SubmitData {
+    [key: string]: string;
+}
+
 export default function Form({ isEdit, berita, kategori, onClose }: Props) {
     const { data, setData, post, put, processing, errors } = useForm({
         judul: berita?.judul || '',
@@ -28,18 +32,52 @@ export default function Form({ isEdit, berita, kategori, onClose }: Props) {
         is_active: berita?.is_active ?? true
     });
 
+    console.log('Form Data:', data);
+
     const [preview, setPreview] = useState<string | null>(null);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         
+        const submitData: SubmitData = {
+            judul: data.judul,
+            kategori: data.kategori,
+            excerpt: data.excerpt,
+            konten: data.konten,
+            tanggal_publikasi: data.tanggal_publikasi,
+            is_active: data.is_active ? '1' : '0',
+            _method: isEdit ? 'put' : 'post'
+        };
+
+        const formData = new FormData();
+        
+        Object.keys(submitData).forEach(key => {
+            formData.append(key, submitData[key]);
+        });
+
+        if (data.gambar instanceof File) {
+            formData.append('gambar', data.gambar);
+        }
+        
         if (isEdit && berita) {
-            put(route('admin.berita.update', berita.id), {
-                onSuccess: () => onClose()
+            router.post(route('admin.berita.update', berita.id), formData, {
+                onSuccess: () => {
+                    onClose();
+                    window.location.reload();
+                },
+                onFinish: () => {
+                    onClose();
+                }
             });
         } else {
-            post(route('admin.berita.store'), {
-                onSuccess: () => onClose()
+            router.post(route('admin.berita.store'), formData, {
+                onSuccess: () => {
+                    onClose();
+                    window.location.reload();
+                },
+                onFinish: () => {
+                    onClose();
+                }
             });
         }
     };
@@ -131,9 +169,12 @@ export default function Form({ isEdit, berita, kategori, onClose }: Props) {
                     </div>
 
                     {/* Gambar */}
-                    <div>
+                    <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700">
                             Gambar
+                            <span className="text-xs text-gray-500 ml-1">
+                                (Max: 10MB, Format: JPG, JPEG, PNG)
+                            </span>
                         </label>
                         <input
                             type="file"

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Berita;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class WelcomeController extends Controller
 {
@@ -15,20 +17,25 @@ class WelcomeController extends Controller
             ->take(6)
             ->get()
             ->map(function($item) {
+                Log::info('Berita image path:', [
+                    'original_path' => $item->gambar,
+                    'storage_url' => $item->gambar ? Storage::url($item->gambar) : null,
+                    'exists' => $item->gambar ? Storage::exists('public/' . $item->gambar) : false
+                ]);
+
+                $imageUrl = null;
+                if ($item->gambar) {
+                    $imageUrl = asset('storage/' . $item->gambar);
+                }
+
                 return [
                     'title' => $item->judul,
                     'category' => $item->kategori,
                     'date' => $item->tanggal_publikasi->format('Y-m-d'),
-                    'image' => asset('storage/' . $item->gambar),
+                    'image' => $imageUrl,
                     'excerpt' => $item->excerpt
                 ];
             });
-
-        \Log::info('Berita data:', [
-            'count' => $berita->count(),
-            'data' => $berita->toArray(),
-            'kategori' => Berita::KATEGORI
-        ]);
 
         return Inertia::render('Landing/Welcome', [
             'berita' => $berita,

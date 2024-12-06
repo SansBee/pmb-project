@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\ProgramStudi;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class ProgramStudiController extends Controller
 {
@@ -31,10 +32,12 @@ class ProgramStudiController extends Controller
         return redirect()->back()->with('message', 'Program studi berhasil ditambahkan');
     }
 
-    public function update(Request $request, ProgramStudi $programStudi)
+    public function update(Request $request, $id)
     {
+        $programStudi = ProgramStudi::findOrFail($id);
+        
         $validated = $request->validate([
-            'nama' => 'required|string|max:255|unique:program_studi,nama,' . $programStudi->id,
+            'nama' => 'required|string|max:255|unique:program_studi,nama,' . $id,
             'deskripsi' => 'nullable|string',
             'kuota' => 'required|integer|min:0',
             'is_active' => 'boolean'
@@ -42,16 +45,18 @@ class ProgramStudiController extends Controller
 
         $programStudi->update($validated);
 
-        return redirect()->back()->with('message', 'Program studi berhasil diperbarui');
+        return back()->with('message', 'Program studi berhasil diperbarui');
     }
 
-    public function destroy(ProgramStudi $programStudi)
+    public function destroy($id)
     {
+        $programStudi = ProgramStudi::findOrFail($id);
+        
         try {
             $programStudi->delete();
-            return redirect()->back()->with('message', 'Program studi berhasil dihapus');
+            return back()->with('message', 'Program studi berhasil dihapus');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal menghapus program studi');
+            return back()->with('error', 'Gagal menghapus program studi');
         }
     }
 } 
