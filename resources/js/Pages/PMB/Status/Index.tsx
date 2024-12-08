@@ -3,6 +3,7 @@ import { Head } from '@inertiajs/react';
 import PMBLayout from '@/Layouts/PMBLayout';
 import { CheckCircleIcon, XCircleIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { Link } from '@inertiajs/react';
+import ProgressSteps from '@/Components/PMB/ProgressSteps';
 
 interface Props {
     auth: {
@@ -32,6 +33,36 @@ interface Props {
 }
 
 export default function Status({ auth, pendaftaran }: Props) {
+    const getSteps = (pendaftar: any) => {
+        const steps = [
+            {
+                label: 'Pendaftaran',
+                status: 'complete' as const
+            },
+            {
+                label: 'Upload Dokumen',
+                status: pendaftar.status_pendaftaran === 'menunggu_dokumen' ? 'current' as const : 
+                       pendaftar.status_pendaftaran === 'draft' ? 'pending' as const : 'complete' as const
+            },
+            {
+                label: 'Pembayaran',
+                status: pendaftar.status_pendaftaran === 'menunggu_bayar' ? 'current' as const :
+                       ['draft', 'menunggu_dokumen'].includes(pendaftar.status_pendaftaran) ? 'pending' as const : 'complete' as const
+            }
+        ];
+
+        // Tambahkan step ujian jika jalur reguler
+        if (pendaftar.jalur_masuk?.nama_jalur === 'Reguler') {
+            steps.push({
+                label: 'Ujian',
+                status: pendaftar.status_pendaftaran === 'menunggu_ujian' ? 'current' as const :
+                       ['draft', 'menunggu_dokumen', 'menunggu_bayar'].includes(pendaftar.status_pendaftaran) ? 'pending' as const : 'complete' as const
+            });
+        }
+
+        return steps;
+    };
+
     return (
         <PMBLayout user={auth.user}>
             <Head title="Status Pendaftaran" />
@@ -90,6 +121,11 @@ export default function Status({ auth, pendaftaran }: Props) {
                                     <PaymentStatus {...pendaftaran.pembayaran} />
                                 </div>
                             )}
+
+                            <div className="bg-white p-6 rounded-lg shadow mb-6">
+                                <h2 className="text-lg font-medium mb-4">Progress Pendaftaran</h2>
+                                <ProgressSteps steps={getSteps(pendaftaran)} />
+                            </div>
                         </div>
                     )}
                 </div>

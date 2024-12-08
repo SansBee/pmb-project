@@ -6,16 +6,10 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 
 interface Props {
-    data: {
-        nama_ayah: string;
-        pekerjaan_ayah: string;
-        nama_ibu: string;
-        pekerjaan_ibu: string;
-        penghasilan_ortu: string;
-    };
+    data: any;
     onChange: (data: any) => void;
+    onSubmit: (data: any) => void;
     onPrev: () => void;
-    onSubmit: () => void;
 }
 
 export default function DataOrangTuaForm({ data, onChange, onPrev, onSubmit }: Props) {
@@ -28,7 +22,7 @@ export default function DataOrangTuaForm({ data, onChange, onPrev, onSubmit }: P
         if (!data.nama_ayah || !data.pekerjaan_ayah || !data.nama_ibu || !data.pekerjaan_ibu || !data.penghasilan_ortu) {
             return;
         }
-        onSubmit();
+        onSubmit(data);
     };
 
     const pekerjaan = [

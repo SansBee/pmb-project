@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\BeritaController;
 use App\Http\Controllers\Admin\JalurMasukController;
 use App\Http\Controllers\Admin\NotifikasiController;
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\PMB\StatusController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -109,10 +110,12 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::delete('/pengumuman/{id}', [PengumumanController::class, 'destroy'])->name('admin.pengumuman.destroy');
 
     // Jadwal Ujian
-    Route::get('/jadwal-ujian', [JadwalUjianController::class, 'index'])->name('admin.jadwal-ujian');
-    Route::post('/jadwal-ujian', [JadwalUjianController::class, 'store'])->name('admin.jadwal-ujian.store');
-    Route::put('/jadwal-ujian/{id}', [JadwalUjianController::class, 'update'])->name('admin.jadwal-ujian.update');
-    Route::delete('/jadwal-ujian/{id}', [JadwalUjianController::class, 'destroy'])->name('admin.jadwal-ujian.destroy');
+    Route::prefix('jadwal-ujian')->group(function () {
+        Route::get('/', [JadwalUjianController::class, 'index'])->name('admin.jadwal-ujian');
+        Route::post('/store', [JadwalUjianController::class, 'store'])->name('admin.jadwal-ujian.store');
+        Route::put('/{id}', [JadwalUjianController::class, 'update'])->name('admin.jadwal-ujian.update');
+        Route::delete('/{id}', [JadwalUjianController::class, 'destroy'])->name('admin.jadwal-ujian.destroy');
+    });
 
     // FAQ
     Route::get('/faq', [FaqController::class, 'index'])->name('admin.faq');
@@ -128,7 +131,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 });
 
 // Route untuk user biasa
-Route::middleware(['auth'])->prefix('pmb')->name('pmb.')->group(function () {
+Route::middleware(['auth', 'verified'])->prefix('pmb')->name('pmb.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\PMB\DashboardController::class, 'index'])->name('dashboard');
     
     // Form Pendaftaran
@@ -152,6 +155,9 @@ Route::middleware(['auth'])->prefix('pmb')->name('pmb.')->group(function () {
     
     // Pengumuman
     Route::get('/pengumuman', [App\Http\Controllers\PMB\PengumumanController::class, 'index'])->name('pengumuman');
+    
+    // Status
+    Route::get('/status', [App\Http\Controllers\PMB\StatusController::class, 'index'])->name('status');
 });
 
 Route::get('/prodi/ti', [ProdiController::class, 'ti'])->name('prodi.ti');
@@ -174,5 +180,10 @@ Route::get('/pmb', function () {
 // Route untuk Contact (letakkan di luar middleware group)
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/api/persyaratan-dokumen', [RegisterController::class, 'getPersyaratanDokumen']);
+    Route::post('/api/upload-dokumen', [RegisterController::class, 'uploadDokumen']);
+});
 
 require __DIR__.'/auth.php';  // Pastikan ini ada di bagian bawah file web.php

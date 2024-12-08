@@ -1,27 +1,38 @@
 import React, { useState } from 'react';
-import { Head, router } from '@inertiajs/react';
 import PMBLayout from '@/Layouts/PMBLayout';
+import { Head, router } from '@inertiajs/react';
 import StepProgress from '@/Components/PMB/StepProgress';
-import { toast } from 'react-hot-toast';
-
-// Step components
 import DataPribadiForm from './Steps/DataPribadiForm';
 import DataAkademikForm from './Steps/DataAkademikForm';
 import DataProgramForm from './Steps/DataProgramForm';
 import DataOrangTuaForm from './Steps/DataOrangTuaForm';
+
+const steps = [
+    {
+        title: 'Data Program',
+        description: 'Pilih program studi'
+    },
+    {
+        title: 'Data Pribadi',
+        description: 'Informasi diri'
+    },
+    {
+        title: 'Data Akademik',
+        description: 'Riwayat pendidikan'
+    },
+    {
+        title: 'Data Orang Tua',
+        description: 'Informasi keluarga'
+    }
+];
+
 interface Props {
-    auth: {
-        user: {
-            id: number;
-            name: string;
-            email: string;
-        };
-    };
-    jalur_masuk: Array<{
+    auth: { user: any };
+    jalurMasuk: Array<{
         id: number;
         nama_jalur: string;
     }>;
-    program_studi: Array<{
+    programStudi: Array<{
         id: number;
         nama: string;
     }>;
@@ -33,128 +44,170 @@ interface Props {
     };
 }
 
-export default function Register({ auth, jalur_masuk, program_studi, gelombang }: Props) {
-    const [currentStep, setCurrentStep] = useState(1);
-    const [formData, setFormData] = useState({
-        // Data Pribadi
-        nama_lengkap: '',
-        nik: '',
-        tempat_lahir: '',
-        tanggal_lahir: '',
-        jenis_kelamin: '',
-        // Data Akademik
-        asal_sekolah: '',
-        jurusan_sekolah: '',
-        tahun_lulus: '',
-        nilai_rata_rata: '',
-        // Data Program
-        jalur_masuk_id: '',
-        program_studi_id: '',
-        gelombang_id: gelombang.id,
-        // Data Orang Tua
-        nama_ayah: '',
-        pekerjaan_ayah: '',
-        nama_ibu: '',
-        pekerjaan_ibu: '',
-        penghasilan_ortu: ''
+interface FormData {
+    program: {
+        jalur_masuk_id?: string | number;
+        program_studi_id?: string | number;
+        gelombang_id?: string | number;
+    };
+    pribadi: {
+        nama_lengkap: string;
+        nik: string;
+        tempat_lahir: string;
+        tanggal_lahir: string;
+        jenis_kelamin: string;
+    };
+    akademik: {
+        asal_sekolah: string;
+        jurusan_sekolah: string;
+        tahun_lulus: string;
+        nilai_rata_rata: string;
+    };
+    orangTua: {
+        nama_ayah: string;
+        pekerjaan_ayah: string;
+        nama_ibu: string;
+        pekerjaan_ibu: string;
+        penghasilan_ortu: string;
+    };
+}
+
+export default function Register({ auth, jalurMasuk, programStudi, gelombang }: Props) {
+    const [currentStep, setCurrentStep] = useState(0);
+    const [formData, setFormData] = useState<FormData>({
+        program: {},
+        pribadi: {
+            nama_lengkap: '',
+            nik: '',
+            tempat_lahir: '',
+            tanggal_lahir: '',
+            jenis_kelamin: ''
+        },
+        akademik: {
+            asal_sekolah: '',
+            jurusan_sekolah: '',
+            tahun_lulus: '',
+            nilai_rata_rata: ''
+        },
+        orangTua: {
+            nama_ayah: '',
+            pekerjaan_ayah: '',
+            nama_ibu: '',
+            pekerjaan_ibu: '',
+            penghasilan_ortu: ''
+        }
     });
 
-    const steps = [
-        { 
-            id: 1, 
-            name: 'Data Pribadi', 
-            status: currentStep === 1 ? 'current' : currentStep > 1 ? 'complete' : 'upcoming' 
-        } as const,
-        { 
-            id: 2, 
-            name: 'Data Akademik', 
-            status: currentStep === 2 ? 'current' : currentStep > 2 ? 'complete' : 'upcoming' 
-        } as const,
-        { 
-            id: 3, 
-            name: 'Program Studi', 
-            status: currentStep === 3 ? 'current' : currentStep > 3 ? 'complete' : 'upcoming' 
-        } as const,
-        { 
-            id: 4, 
-            name: 'Data Orang Tua', 
-            status: currentStep === 4 ? 'current' : currentStep > 4 ? 'complete' : 'upcoming' 
-        } as const,
-    ];
-
-    const handleNext = () => {
-        setCurrentStep(prev => Math.min(prev + 1, 4));
-    };
-
-    const handlePrev = () => {
-        setCurrentStep(prev => Math.max(prev - 1, 1));
-    };
-
-    const handleSubmit = () => {
-        router.post(route('pmb.register.store'), formData, {
-            onSuccess: () => {
-                toast.success('Pendaftaran berhasil!');
-                router.visit(route('pmb.dashboard'));
-            },
-            onError: (errors: Record<string, string>) => {
-                toast.error('Terjadi kesalahan saat mendaftar.');
-                console.error(errors);
-            }
-        });
+    const handleNext = (data: any) => {
+        setFormData(prev => ({
+            ...prev,
+            [Object.keys(data)[0]]: data[Object.keys(data)[0]]
+        }));
+        setCurrentStep(prev => prev + 1);
     };
 
     const renderStep = () => {
-        switch(currentStep) {
-            case 1:
-                return <DataPribadiForm 
-                    data={formData} 
-                    onChange={setFormData} 
-                    onNext={handleNext} 
-                />;
-            case 2:
-                return <DataAkademikForm 
-                    data={formData} 
-                    onChange={setFormData}
-                    onNext={handleNext}
-                    onPrev={handlePrev}
-                />;
-            case 3:
-                return <DataProgramForm 
-                    data={formData}
-                    onChange={setFormData}
-                    jalurMasuk={jalur_masuk}
-                    programStudi={program_studi}
+        switch (currentStep) {
+            case 0:
+                return <DataProgramForm
+                    data={formData.program}
+                    onChange={(data) => setFormData({ ...formData, program: data })}
+                    jalurMasuk={jalurMasuk}
+                    programStudi={programStudi}
                     gelombang={gelombang}
                     onNext={handleNext}
-                    onPrev={handlePrev}
+                    onPrev={() => {}}
                 />;
-            case 4:
-                return <DataOrangTuaForm 
-                    data={formData}
-                    onChange={setFormData}
-                    onPrev={handlePrev}
+            case 1:
+                return <DataPribadiForm
+                    data={formData.pribadi}
+                    onChange={(data) => setFormData({ ...formData, pribadi: data })}
+                    onNext={handleNext}
+                    onPrev={() => setCurrentStep(0)}
+                />;
+            case 2:
+                return <DataAkademikForm
+                    data={formData.akademik}
+                    onChange={(data) => setFormData({ ...formData, akademik: data })}
+                    onNext={handleNext}
+                    onPrev={() => setCurrentStep(1)}
+                />;
+            case 3:
+                return <DataOrangTuaForm
+                    data={formData.orangTua}
+                    onChange={(data) => setFormData({ ...formData, orangTua: data })}
                     onSubmit={handleSubmit}
+                    onPrev={() => setCurrentStep(2)}
                 />;
             default:
                 return null;
         }
     };
 
+    const handleSubmit = async (data: any) => {
+        const finalData = {
+            // Data Program
+            jalur_masuk_id: formData.program.jalur_masuk_id,
+            program_studi_id: formData.program.program_studi_id,
+            gelombang_id: gelombang.id,
+            
+            // Data Pribadi
+            nama_lengkap: formData.pribadi.nama_lengkap,
+            nik: formData.pribadi.nik,
+            tempat_lahir: formData.pribadi.tempat_lahir,
+            tanggal_lahir: formData.pribadi.tanggal_lahir,
+            jenis_kelamin: formData.pribadi.jenis_kelamin,
+            
+            // Data Akademik
+            asal_sekolah: formData.akademik.asal_sekolah,
+            jurusan_sekolah: formData.akademik.jurusan_sekolah,
+            tahun_lulus: formData.akademik.tahun_lulus,
+            nilai_rata_rata: formData.akademik.nilai_rata_rata,
+            
+            // Data Orang Tua
+            nama_ayah: data.nama_ayah,
+            pekerjaan_ayah: data.pekerjaan_ayah,
+            nama_ibu: data.nama_ibu,
+            pekerjaan_ibu: data.pekerjaan_ibu,
+            penghasilan_ortu: data.penghasilan_ortu
+        };
+
+        console.log('Sending data:', finalData);
+
+        router.post(route('pmb.register.store'), finalData, {
+            onSuccess: () => {
+                router.visit(route('pmb.dashboard'));
+            },
+            onError: (errors) => {
+                console.error('Registration errors:', errors);
+                alert('Terjadi kesalahan saat mendaftar. Silakan coba lagi.');
+            }
+        });
+    };
+
     return (
         <PMBLayout user={auth.user}>
-            <Head title="Form Pendaftaran PMB" />
-            
+            <Head title="Pendaftaran PMB" />
+
             <div className="py-12">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div className="bg-white overflow-hidden shadow-sm rounded-lg">
                         <div className="p-6">
-                            <h2 className="text-2xl font-semibold mb-6">Form Pendaftaran PMB</h2>
-                            
-                            <div className="mb-8">
-                                <StepProgress currentStep={currentStep} steps={steps} />
-                            </div>
+                            <h2 className="text-2xl font-semibold mb-6">
+                                Pendaftaran PMB
+                            </h2>
 
-                            {renderStep()}
+                            <StepProgress 
+                                currentStep={currentStep}
+                                steps={steps.map((step, index) => ({
+                                    ...step,
+                                    completed: index < currentStep
+                                }))}
+                            />
+
+                            <div className="mt-8">
+                                {renderStep()}
+                            </div>
                         </div>
                     </div>
                 </div>

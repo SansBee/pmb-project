@@ -5,18 +5,13 @@ import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 
 interface Props {
-    data: {
-        nama_lengkap: string;
-        nik: string;
-        tempat_lahir: string;
-        tanggal_lahir: string;
-        jenis_kelamin: string;
-    };
+    data: any;
     onChange: (data: any) => void;
-    onNext: () => void;
+    onNext: (data: any) => void;
+    onPrev: () => void;
 }
 
-export default function DataPribadiForm({ data, onChange, onNext }: Props) {
+export default function DataPribadiForm({ data, onChange, onNext, onPrev }: Props) {
     const handleChange = (key: string, value: string) => {
         onChange({ ...data, [key]: value });
     };
@@ -27,7 +22,7 @@ export default function DataPribadiForm({ data, onChange, onNext }: Props) {
         if (!data.nama_lengkap || !data.nik || !data.tempat_lahir || !data.tanggal_lahir || !data.jenis_kelamin) {
             return;
         }
-        onNext();
+        onNext(data);
     };
 
     return (

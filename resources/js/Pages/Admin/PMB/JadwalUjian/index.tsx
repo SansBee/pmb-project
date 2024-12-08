@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import AdminLayout from '@/Layouts/AdminLayout';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import JadwalForm from './Form';
 
 interface JadwalUjian {
@@ -15,6 +15,10 @@ interface JadwalUjian {
     ruangan: string;
     kapasitas: number;
     is_active: boolean;
+    pendaftar?: Array<{
+        id: number;
+        nama: string;
+    }>;
 }
 
 interface Props {
@@ -28,6 +32,7 @@ interface Props {
 export default function JadwalUjianIndex({ jadwal, gelombang }: Props) {
     const [showForm, setShowForm] = useState(false);
     const [editData, setEditData] = useState<JadwalUjian | null>(null);
+    const [showDaftarPeserta, setShowDaftarPeserta] = useState(false);
 
     return (
         <AdminLayout>
@@ -64,7 +69,7 @@ export default function JadwalUjianIndex({ jadwal, gelombang }: Props) {
                                                 Lokasi/Ruangan
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                                Kapasitas
+                                                Jumlah Peserta
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 Status
@@ -102,7 +107,7 @@ export default function JadwalUjianIndex({ jadwal, gelombang }: Props) {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="text-sm text-gray-900">
-                                                        {item.kapasitas} orang
+                                                        {item.pendaftar?.length || 0} / {item.kapasitas}
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
@@ -120,6 +125,18 @@ export default function JadwalUjianIndex({ jadwal, gelombang }: Props) {
                                                         className="text-indigo-600 hover:text-indigo-900 mr-3"
                                                     >
                                                         Edit
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => router.visit(route('admin.jadwal-ujian.peserta', item.id))}
+                                                        className="text-blue-600 hover:text-blue-900 mr-3"
+                                                    >
+                                                        Lihat Peserta
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => setShowDaftarPeserta(true)}
+                                                        className="text-green-600 hover:text-green-900 mr-3"
+                                                    >
+                                                        Daftarkan Peserta
                                                     </button>
                                                     <button className="text-red-600 hover:text-red-900">
                                                         Hapus

@@ -5,20 +5,25 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Dokumen extends Model
+class PendaftarUjian extends Model
 {
-    protected $table = 'dokumen';
-    
     protected $fillable = [
         'pendaftar_id',
-        'nama_dokumen',
-        'file_path',
+        'jadwal_ujian_id',
         'status',
-        'keterangan'
+        'nilai',
+        'catatan'
     ];
+
+    protected $table = 'pendaftar_ujian';
 
     public function pendaftar(): BelongsTo
     {
         return $this->belongsTo(Pendaftar::class);
+    }
+
+    public function jadwalUjian(): BelongsTo
+    {
+        return $this->belongsTo(JadwalUjian::class);
     }
 } 

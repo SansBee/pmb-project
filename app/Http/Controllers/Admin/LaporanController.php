@@ -15,80 +15,24 @@ use App\Exports\PendaftarExport;
 
 class LaporanController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        // Query dasar untuk pendaftar
-        $query = Pendaftar::query();
-
-        // Filter berdasarkan tanggal
-        if ($request->tanggal_mulai) {
-            $query->where('created_at', '>=', $request->tanggal_mulai);
-        }
-        if ($request->tanggal_selesai) {
-            $query->where('created_at', '<=', $request->tanggal_selesai);
-        }
-
-        // Filter berdasarkan program studi
-        if ($request->program_studi_id) {
-            $query->where('program_studi_id', $request->program_studi_id);
-        }
-
-        // Filter berdasarkan status
-        if ($request->status) {
-            $query->where('status_pendaftaran', $request->status);
-        }
-
-        // Hitung total pendaftar
-        $total_pendaftar = $query->count();
-
-        // Hitung total diterima
-        $total_diterima = $query->where('status_pendaftaran', 'diterima')->count();
-
-        // Hitung total pembayaran
-        $total_pembayaran = Pembayaran::whereHas('pendaftar', function($query) {
-            $query->where('status_pembayaran', 'lunas');
-        })->sum('jumlah');
-
-        // Statistik per program studi
-        $per_prodi = ProgramStudi::withCount(['pendaftar' => function($query) {
-            $query->where('status_pendaftaran', 'diterima');
-        }])
-        ->get()
-        ->map(function($prodi) use ($total_pendaftar) {
-            return [
-                'nama' => $prodi->nama,
-                'total' => $prodi->pendaftar_count,
-                'persentase' => $total_pendaftar > 0 ? 
-                    round(($prodi->pendaftar_count / $total_pendaftar) * 100, 1) : 0
-            ];
-        });
-
-        // Statistik per gelombang
-        $per_gelombang = GelombangPMB::withCount('pendaftar')
-            ->get()
-            ->map(function($gelombang) use ($total_pendaftar) {
-                return [
-                    'nama_gelombang' => $gelombang->nama_gelombang,
-                    'total' => $gelombang->pendaftar_count,
-                    'persentase' => $total_pendaftar > 0 ? 
-                        round(($gelombang->pendaftar_count / $total_pendaftar) * 100, 1) : 0
-                ];
-            });
+        $stats = [
+            'per_jalur' => Pendaftar::selectRaw('jalur_masuk_id, count(*) as total')
+                ->groupBy('jalur_masuk_id')
+                ->with('jalurMasuk')
+                ->get(),
+            'per_prodi' => Pendaftar::selectRaw('program_studi_id, count(*) as total')
+                ->groupBy('program_studi_id')
+                ->with('programStudi')
+                ->get(),
+            'per_status' => Pendaftar::selectRaw('status_pendaftaran, count(*) as total')
+                ->groupBy('status_pendaftaran')
+                ->get()
+        ];
 
         return Inertia::render('Admin/PMB/Laporan/Index', [
-            'statistik' => [
-                'total_pendaftar' => $total_pendaftar,
-                'total_diterima' => $total_diterima,
-                'total_pembayaran' => $total_pembayaran,
-                'per_prodi' => $per_prodi,
-                'per_gelombang' => $per_gelombang
-            ],
-            'filter' => $request->only([
-                'tanggal_mulai',
-                'tanggal_selesai',
-                'program_studi_id',
-                'status'
-            ])
+            'stats' => $stats
         ]);
     }
 

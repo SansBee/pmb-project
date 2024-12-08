@@ -1,54 +1,55 @@
 import React from 'react';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 
-type StepStatus = 'current' | 'complete' | 'upcoming';
-
 interface Props {
     currentStep: number;
     steps: Array<{
-        id: number;
-        name: string;
-        description?: string;
-        status: StepStatus;
+        title: string;
+        description: string;
+        completed: boolean;
     }>;
 }
 
 export default function StepProgress({ currentStep, steps }: Props) {
     return (
-        <nav aria-label="Progress">
-            <ol role="list" className="space-y-4 md:flex md:space-y-0 md:space-x-8">
-                {steps.map((step) => (
-                    <li key={step.id} className="md:flex-1">
-                        <div className={`
-                            group pl-4 py-2 flex flex-col border-l-4 md:pl-0 md:pt-4 md:pb-0 md:border-l-0 md:border-t-4
-                            ${step.status === 'complete' ? 'border-indigo-600' : ''}
-                            ${step.status === 'current' ? 'border-indigo-600' : ''}
-                            ${step.status === 'upcoming' ? 'border-gray-200' : ''}
-                        `}>
-                            <span className={`
-                                text-xs font-semibold tracking-wide uppercase
-                                ${step.status === 'complete' ? 'text-indigo-600' : ''}
-                                ${step.status === 'current' ? 'text-indigo-600' : ''}
-                                ${step.status === 'upcoming' ? 'text-gray-500' : ''}
-                            `}>
-                                {step.status === 'complete' ? (
-                                    <CheckCircleIcon className="w-5 h-5 text-indigo-600" />
-                                ) : (
-                                    <span>{step.id}</span>
-                                )}
-                            </span>
-                            <span className="text-sm font-medium">
-                                {step.name}
-                            </span>
-                            {step.description && (
-                                <span className="text-sm text-gray-500">
-                                    {step.description}
-                                </span>
+        <div className="w-full py-6">
+            <div className="flex">
+                {steps.map((step, index) => (
+                    <div key={index} className="flex-1">
+                        <div className="relative">
+                            {/* Garis penghubung */}
+                            {index < steps.length - 1 && (
+                                <div className={`absolute top-1/2 w-full h-0.5 ${
+                                    step.completed ? 'bg-indigo-600' : 'bg-gray-200'
+                                }`} />
                             )}
+                            
+                            {/* Lingkaran step */}
+                            <div className="relative flex items-center justify-center">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                    currentStep === index
+                                        ? 'bg-indigo-600 text-white'
+                                        : step.completed
+                                        ? 'bg-green-500 text-white'
+                                        : 'bg-gray-200 text-gray-600'
+                                }`}>
+                                    {step.completed ? '✓' : index + 1}
+                                </div>
+                            </div>
+                            
+                            {/* Teks step */}
+                            <div className="mt-2 text-center">
+                                <div className="text-sm font-medium">
+                                    {step.title}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                    {step.description}
+                                </div>
+                            </div>
                         </div>
-                    </li>
+                    </div>
                 ))}
-            </ol>
-        </nav>
+            </div>
+        </div>
     );
 } 

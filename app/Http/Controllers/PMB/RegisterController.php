@@ -3,49 +3,45 @@
 namespace App\Http\Controllers\PMB;
 
 use App\Http\Controllers\Controller;
+use App\Models\JalurMasuk;
+use App\Models\ProgramStudi;
+use App\Models\GelombangPMB;
 use App\Models\Pendaftar;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Models\PersyaratanDokumen;
+use App\Models\DokumenPendaftar;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class RegisterController extends Controller
 {
     public function index()
     {
-        // Cek apakah user sudah pernah mendaftar
-        $pendaftaran = Pendaftar::with(['dataPribadi', 'dataAkademik', 'dataOrangTua'])
-            ->where('user_id', Auth::id())
-            ->first();
+        // Ambil data yang diperlukan untuk form
+        $jalur_masuk = JalurMasuk::where('is_active', true)->get();
+        $program_studi = ProgramStudi::where('is_active', true)->get();
+        $gelombang = GelombangPMB::where('is_active', true)->first();
 
         return Inertia::render('PMB/Register/Index', [
-            'jalur_masuk' => \App\Models\JalurMasuk::where('is_active', true)
-                ->get()
-                ->map(fn($jalur) => [
-                    'id' => $jalur->id,
-                    'nama_jalur' => $jalur->nama_jalur
-                ]),
-            'program_studi' => \App\Models\ProgramStudi::where('is_active', true)
-                ->get(['id', 'nama']),
-            'gelombang' => \App\Models\GelombangPMB::where([
-                ['is_active', '=', 1],
-                ['aktif', '=', 1]
-            ])
-            ->first([
-                'id',
-                'nama_gelombang',
-                'tanggal_mulai',
-                'tanggal_selesai'
-            ]),
-            'pendaftaran' => $pendaftaran
+            'jalurMasuk' => $jalur_masuk,
+            'programStudi' => $program_studi,
+            'gelombang' => $gelombang
         ]);
     }
 
     public function store(Request $request)
     {
         try {
+            Log::info('Received registration data:', $request->all());
+
             $request->validate([
+                // Data Program
+                'jalur_masuk_id' => 'required|exists:jalur_masuk,id',
+                'program_studi_id' => 'required|exists:program_studi,id',
+                'gelombang_id' => 'required|exists:gelombang_pmb,id',
+                
                 // Data Pribadi
                 'nama_lengkap' => 'required|string|max:255',
                 'nik' => 'required|string|size:16|unique:data_pribadi,nik',
@@ -59,11 +55,6 @@ class RegisterController extends Controller
                 'tahun_lulus' => 'required|digits:4',
                 'nilai_rata_rata' => 'required|numeric|min:0|max:100',
                 
-                // Data Program
-                'jalur_masuk_id' => 'required|exists:jalur_masuk,id',
-                'program_studi_id' => 'required|exists:program_studi,id',
-                'gelombang_id' => 'required|exists:gelombang_pmb,id',
-                
                 // Data Orang Tua
                 'nama_ayah' => 'required|string|max:255',
                 'pekerjaan_ayah' => 'required|string',
@@ -73,76 +64,134 @@ class RegisterController extends Controller
             ]);
 
             DB::beginTransaction();
-
-            // Log data request
-            Log::info('Data request:', $request->all());
-
-            // Cek apakah sudah pernah mendaftar
-            $existingPendaftar = Pendaftar::where('user_id', Auth::id())->first();
-            if ($existingPendaftar) {
-                DB::rollback();
-                return back()->withErrors(['message' => 'Anda sudah pernah mendaftar.']);
-            }
-
-            // Buat pendaftar baru
-            $pendaftar = Pendaftar::create([
-                'user_id' => Auth::id(),
-                'jalur_masuk_id' => $request->jalur_masuk_id,
-                'program_studi_id' => $request->program_studi_id,
-                'gelombang_id' => $request->gelombang_id,
-                'nama_lengkap' => $request->nama_lengkap,
-                'email' => Auth::user()->email,
-                'status_pendaftaran' => 'baru',
-                'status_pembayaran' => 'belum_bayar'
-            ]);
-
-            // Log pendaftar yang dibuat
-            Log::info('Pendaftar created:', $pendaftar->toArray());
-
             try {
+                Log::info('Creating pendaftar with data:', [
+                    'user_id' => Auth::id(),
+                    'jalur_masuk_id' => $request->jalur_masuk_id,
+                    'program_studi_id' => $request->program_studi_id,
+                    'gelombang_id' => $request->gelombang_id,
+                    // ... log data lainnya
+                ]);
+
+                // Buat pendaftar baru
+                $pendaftar = Pendaftar::create([
+                    'user_id' => Auth::id(),
+                    'jalur_masuk_id' => $request->jalur_masuk_id,
+                    'program_studi_id' => $request->program_studi_id,
+                    'gelombang_id' => $request->gelombang_id,
+                    'nama_lengkap' => $request->nama_lengkap,
+                    'email' => Auth::user()->email,
+                    'status_pendaftaran' => 'baru',
+                    'status_pembayaran' => 'belum_bayar'
+                ]);
+
+                Log::info('Created pendaftar:', $pendaftar->toArray());
+
                 // Simpan data pribadi
-                $dataPribadi = $pendaftar->dataPribadi()->create([
+                $pendaftar->dataPribadi()->create([
                     'nama_lengkap' => $request->nama_lengkap,
                     'nik' => $request->nik,
                     'tempat_lahir' => $request->tempat_lahir,
                     'tanggal_lahir' => $request->tanggal_lahir,
                     'jenis_kelamin' => $request->jenis_kelamin
                 ]);
-                Log::info('Data pribadi created:', $dataPribadi->toArray());
 
                 // Simpan data akademik
-                $dataAkademik = $pendaftar->dataAkademik()->create([
+                $pendaftar->dataAkademik()->create([
                     'asal_sekolah' => $request->asal_sekolah,
                     'jurusan_sekolah' => $request->jurusan_sekolah,
                     'tahun_lulus' => $request->tahun_lulus,
                     'nilai_rata_rata' => $request->nilai_rata_rata
                 ]);
-                Log::info('Data akademik created:', $dataAkademik->toArray());
 
                 // Simpan data orang tua
-                $dataOrangTua = $pendaftar->dataOrangTua()->create([
+                $pendaftar->dataOrangTua()->create([
                     'nama_ayah' => $request->nama_ayah,
                     'pekerjaan_ayah' => $request->pekerjaan_ayah,
                     'nama_ibu' => $request->nama_ibu,
                     'pekerjaan_ibu' => $request->pekerjaan_ibu,
                     'penghasilan_ortu' => $request->penghasilan_ortu
                 ]);
-                Log::info('Data orang tua created:', $dataOrangTua->toArray());
 
+                DB::commit();
+                return redirect()->route('pmb.dashboard')
+                    ->with('success', 'Pendaftaran berhasil! Silakan lengkapi dokumen yang diperlukan.');
             } catch (\Exception $e) {
-                Log::error('Error creating related data: ' . $e->getMessage());
                 DB::rollback();
+                Log::error('Error creating pendaftar:', [
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
                 throw $e;
             }
-
-            DB::commit();
-            return redirect()->route('pmb.dashboard')
-                ->with('success', 'Pendaftaran berhasil! Silahkan lengkapi dokumen yang diperlukan.');
-
         } catch (\Exception $e) {
-            Log::error('Error in registration: ' . $e->getMessage());
-            DB::rollback();
-            return back()->withErrors(['message' => 'Terjadi kesalahan saat mendaftar: ' . $e->getMessage()]);
+            Log::error('Error in registration:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->withErrors(['message' => 'Terjadi kesalahan: ' . $e->getMessage()]);
         }
+    }
+
+    public function getPersyaratanDokumen()
+    {
+        $persyaratan = PersyaratanDokumen::where('is_active', true)
+            ->orderBy('urutan')
+            ->orderBy('kategori')
+            ->get();
+        return response()->json($persyaratan);
+    }
+
+    public function uploadDokumen(Request $request)
+    {
+        $request->validate([
+            'persyaratan_dokumen_id' => 'required|exists:persyaratan_dokumen,id',
+            'file' => 'required|file'
+        ]);
+
+        // Ambil persyaratan dokumen
+        $persyaratan = PersyaratanDokumen::findOrFail($request->persyaratan_dokumen_id);
+        
+        // Validasi format file jika ada
+        if ($persyaratan->format_file) {
+            $allowed_formats = explode(',', $persyaratan->format_file);
+            $extension = $request->file('file')->getClientOriginalExtension();
+            if (!in_array($extension, $allowed_formats)) {
+                return response()->json([
+                    'message' => 'Format file tidak sesuai. Format yang diizinkan: ' . $persyaratan->format_file
+                ], 422);
+            }
+        }
+
+        // Validasi ukuran file
+        if ($persyaratan->max_size) {
+            $max_size = $persyaratan->max_size;
+            if ($persyaratan->size_type === 'MB') {
+                $max_size *= 1024;
+            }
+            $request->validate([
+                'file' => "max:{$max_size}"
+            ]);
+        }
+
+        $file = $request->file('file');
+        $filename = time() . '_' . $file->getClientOriginalName();
+        $path = $file->storeAs('dokumen-pendaftar', $filename, 'public');
+
+        // Simpan data dokumen
+        $pendaftar = Pendaftar::where('user_id', Auth::id())->firstOrFail();
+        
+        DokumenPendaftar::create([
+            'pendaftar_id' => $pendaftar->id,
+            'persyaratan_dokumen_id' => $request->persyaratan_dokumen_id,
+            'nama_file' => $file->getClientOriginalName(),
+            'path' => $path,
+            'status' => 'pending'
+        ]);
+
+        return response()->json([
+            'message' => 'Dokumen berhasil diupload',
+            'path' => $path
+        ]);
     }
 }

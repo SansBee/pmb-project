@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class JadwalUjian extends Model
 {
@@ -23,8 +25,13 @@ class JadwalUjian extends Model
         'is_active' => 'boolean'
     ];
 
-    public function gelombang()
+    public function gelombang(): BelongsTo
     {
         return $this->belongsTo(GelombangPMB::class, 'gelombang_id');
+    }
+
+    public function pendaftar(): HasMany
+    {
+        return $this->hasMany(PendaftarUjian::class);
     }
 } 

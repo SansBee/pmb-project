@@ -6,14 +6,9 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 
 interface Props {
-    data: {
-        asal_sekolah: string;
-        jurusan_sekolah: string;
-        tahun_lulus: string;
-        nilai_rata_rata: string;
-    };
+    data: any;
     onChange: (data: any) => void;
-    onNext: () => void;
+    onNext: (data: any) => void;
     onPrev: () => void;
 }
 
@@ -27,7 +22,7 @@ export default function DataAkademikForm({ data, onChange, onNext, onPrev }: Pro
         if (!data.asal_sekolah || !data.jurusan_sekolah || !data.tahun_lulus || !data.nilai_rata_rata) {
             return;
         }
-        onNext();
+        onNext(data);
     };
 
     return (

@@ -31,7 +31,7 @@ interface FormData {
 }
 
 export default function JadwalForm({ isEdit = false, jadwal, gelombang, onClose }: Props) {
-    const { data, setData, post, put, processing, errors } = useForm<FormData>({
+    const { data, setData, post, put, processing } = useForm<FormData>({
         gelombang_id: jadwal?.gelombang_id || gelombang[0]?.id || 0,
         jenis_ujian: jadwal?.jenis_ujian || '',
         tanggal_ujian: jadwal?.tanggal_ujian || '',
@@ -45,12 +45,12 @@ export default function JadwalForm({ isEdit = false, jadwal, gelombang, onClose 
         e.preventDefault();
         
         if (isEdit && jadwal) {
-            put(`/admin/jadwal/${jadwal.id}`, {
-                onSuccess: () => onClose(),
+            put(route('admin.jadwal-ujian.update', jadwal.id), {
+                onSuccess: () => onClose()
             });
         } else {
-            post('/admin/jadwal', {
-                onSuccess: () => onClose(),
+            post(route('admin.jadwal-ujian.store'), {
+                onSuccess: () => onClose()
             });
         }
     };
@@ -79,9 +79,6 @@ export default function JadwalForm({ isEdit = false, jadwal, gelombang, onClose 
                                     </option>
                                 ))}
                             </select>
-                            {errors.gelombang_id && (
-                                <div className="text-red-500 text-sm mt-1">{errors.gelombang_id}</div>
-                            )}
                         </div>
 
                         <div className="mb-4">
@@ -97,9 +94,6 @@ export default function JadwalForm({ isEdit = false, jadwal, gelombang, onClose 
                                 <option value="online">Online</option>
                                 <option value="offline">Offline</option>
                             </select>
-                            {errors.jenis_ujian && (
-                                <div className="text-red-500 text-sm mt-1">{errors.jenis_ujian}</div>
-                            )}
                         </div>
 
                         <div className="mb-4">
@@ -112,9 +106,6 @@ export default function JadwalForm({ isEdit = false, jadwal, gelombang, onClose 
                                 onChange={e => setData('tanggal_ujian', e.target.value)}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                             />
-                            {errors.tanggal_ujian && (
-                                <div className="text-red-500 text-sm mt-1">{errors.tanggal_ujian}</div>
-                            )}
                         </div>
 
                         <div className="mb-4">
@@ -128,9 +119,6 @@ export default function JadwalForm({ isEdit = false, jadwal, gelombang, onClose 
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 placeholder="Gedung/Kampus"
                             />
-                            {errors.lokasi && (
-                                <div className="text-red-500 text-sm mt-1">{errors.lokasi}</div>
-                            )}
                         </div>
 
                         <div className="mb-4">
@@ -144,9 +132,6 @@ export default function JadwalForm({ isEdit = false, jadwal, gelombang, onClose 
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 placeholder="Nomor/Nama Ruangan"
                             />
-                            {errors.ruangan && (
-                                <div className="text-red-500 text-sm mt-1">{errors.ruangan}</div>
-                            )}
                         </div>
 
                         <div className="mb-4">
@@ -160,9 +145,6 @@ export default function JadwalForm({ isEdit = false, jadwal, gelombang, onClose 
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 min="0"
                             />
-                            {errors.kapasitas && (
-                                <div className="text-red-500 text-sm mt-1">{errors.kapasitas}</div>
-                            )}
                         </div>
 
                         <div className="mb-4">

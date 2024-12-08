@@ -12,10 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('nama_dokumen');
             $table->text('deskripsi')->nullable();
-            $table->string('format_file')->nullable(); // pdf,jpg,png
-            $table->integer('max_size')->nullable(); // dalam KB
-            $table->boolean('is_wajib')->default(true);
-            $table->boolean('is_active')->default(true);
+            $table->boolean('wajib')->default(true);
             $table->timestamps();
         });
     }

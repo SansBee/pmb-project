@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Pendaftar extends Model
 {
@@ -21,12 +22,6 @@ class Pendaftar extends Model
         'status_pembayaran'
     ];
 
-    protected $casts = [
-        'status_pendaftaran' => 'string',
-        'status_pembayaran' => 'string'
-    ];
-
-    // Konstanta untuk status
     const STATUS_PENDAFTARAN = [
         'baru' => 'Pendaftar Baru',
         'verifikasi' => 'Sedang Diverifikasi',
@@ -56,7 +51,7 @@ class Pendaftar extends Model
 
     public function gelombang(): BelongsTo
     {
-        return $this->belongsTo(GelombangPMB::class, 'gelombang_id');
+        return $this->belongsTo(GelombangPMB::class);
     }
 
     public function dataPribadi(): HasOne
@@ -74,13 +69,8 @@ class Pendaftar extends Model
         return $this->hasOne(DataOrangTua::class);
     }
 
-    public function dokumen()
+    public function dokumen(): HasMany
     {
         return $this->hasMany(DokumenPendaftar::class);
-    }
-
-    public function pembayaran()
-    {
-        return $this->hasOne(Pembayaran::class);
     }
 }

@@ -3,32 +3,36 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DokumenPendaftar extends Model
 {
     protected $table = 'dokumen_pendaftar';
-
+    
     protected $fillable = [
         'pendaftar_id',
-        'nama_dokumen',
-        'file_path',
+        'persyaratan_dokumen_id',
+        'nama_file',
+        'path',
         'status',
-        'catatan',
-        'verified_by',
-        'verified_at'
+        'verified_at',
+        'verified_by'
     ];
 
     protected $casts = [
         'verified_at' => 'datetime'
     ];
 
-    public function pendaftar(): BelongsTo
+    public function pendaftar()
     {
         return $this->belongsTo(Pendaftar::class);
     }
 
-    public function verifiedBy(): BelongsTo
+    public function persyaratanDokumen()
+    {
+        return $this->belongsTo(PersyaratanDokumen::class);
+    }
+
+    public function verifiedBy()
     {
         return $this->belongsTo(User::class, 'verified_by');
     }
