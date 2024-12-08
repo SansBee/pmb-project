@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class AdminAuthController extends Controller
@@ -14,15 +15,15 @@ class AdminAuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (auth()->attempt($credentials)) {
-            $user = auth()->user();
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
             
             if ($user->is_admin) {
                 $request->session()->regenerate();
                 return redirect()->intended('/admin');
             }
             
-            auth()->logout();
+            Auth::logout();
             return back()->withErrors([
                 'email' => 'Anda tidak memiliki akses admin.',
             ]);
@@ -35,7 +36,7 @@ class AdminAuthController extends Controller
 
     public function logout(Request $request)
     {
-        auth()->logout();
+        Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         

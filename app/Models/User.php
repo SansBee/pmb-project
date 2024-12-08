@@ -21,11 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'program_studi_id',
-        'gelombang_id',
-        'is_admin',
-        'status_pendaftaran',
-        'status_pembayaran'
+        'is_admin'
     ];
 
     /**
@@ -43,13 +39,10 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'is_admin' => 'boolean'
+    ];
 
     public function programStudi()
     {
@@ -61,9 +54,9 @@ class User extends Authenticatable
         return $this->belongsTo(GelombangPMB::class, 'gelombang_id');
     }
 
-    public function pendaftaran()
+    public function pendaftar()
     {
-        return $this->hasOne(Pendaftaran::class);
+        return $this->hasOne(Pendaftar::class);
     }
 
     // Tambahkan konstanta untuk status

@@ -11,8 +11,8 @@ return new class extends Migration
         Schema::create('program_studi', function (Blueprint $table) {
             $table->id();
             $table->string('nama')->unique();
-            $table->text('deskripsi');
-            $table->integer('kuota');
+            $table->text('deskripsi')->nullable();
+            $table->integer('kuota')->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

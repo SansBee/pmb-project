@@ -13,8 +13,8 @@ return new class extends Migration
             $table->string('nama_gelombang');
             $table->date('tanggal_mulai');
             $table->date('tanggal_selesai');
-            $table->integer('kuota');
-            $table->decimal('biaya', 10, 2);
+            $table->integer('kuota')->default(0);
+            $table->decimal('biaya', 12, 2)->default(0);
             $table->boolean('aktif')->default(true);
             $table->timestamps();
         });

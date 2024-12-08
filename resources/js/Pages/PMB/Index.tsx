@@ -109,28 +109,15 @@ export default function Index() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-900/90 to-purple-900/90" />
                 </div>
-                <div className="relative h-full flex items-center">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
-                        <motion.h1
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6"
-                        >
-                            Penerimaan Mahasiswa Baru
-                            <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-                                2024/2025
-                            </span>
-                        </motion.h1>
-                        <motion.p
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                            className="text-xl text-gray-300 max-w-3xl mx-auto mb-8"
-                        >
-                            Wujudkan mimpimu menjadi profesional IT bersama kami
-                        </motion.p>
-                    </div>
+                <div className="text-center">
+                    <motion.h1>
+                        Penerimaan Mahasiswa Baru
+                        <br />
+                        <span>2024/2025</span>
+                    </motion.h1>
+                    <motion.p>
+                        Wujudkan mimpimu menjadi profesional IT bersama kami
+                    </motion.p>
                 </div>
             </div>
 

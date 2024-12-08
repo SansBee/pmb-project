@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string('bukti_pembayaran');
             $table->enum('status', ['pending', 'verified', 'rejected'])->default('pending');
             $table->text('catatan')->nullable();
+            $table->timestamp('verified_at')->nullable();
+            $table->foreignId('verified_by')->nullable()->constrained('users');
             $table->timestamps();
         });
     }

@@ -25,7 +25,7 @@ export default function Form({ isEdit = false, programStudi, onClose }: Props) {
         e.preventDefault();
         
         if (isEdit && programStudi) {
-            put(route('admin.prodi.update', programStudi.id), {
+            put(route('admin.program-studi.update', programStudi.id), {
                 preserveScroll: true,
                 preserveState: true,
                 onSuccess: () => {
@@ -36,7 +36,7 @@ export default function Form({ isEdit = false, programStudi, onClose }: Props) {
                 }
             });
         } else {
-            post(route('admin.prodi.store'), {
+            post(route('admin.program-studi.store'), {
                 preserveScroll: true,
                 preserveState: true,
                 onSuccess: () => {

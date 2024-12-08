@@ -20,16 +20,20 @@ class ProgramStudiController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'nama' => 'required|string|max:255|unique:program_studi',
             'deskripsi' => 'nullable|string',
-            'kuota' => 'required|integer|min:0',
-            'is_active' => 'boolean'
+            'kuota' => 'nullable|integer|min:0'
         ]);
 
-        ProgramStudi::create($validated);
+        ProgramStudi::create([
+            'nama' => $request->nama,
+            'deskripsi' => $request->deskripsi,
+            'kuota' => $request->kuota,
+            'is_active' => true
+        ]);
 
-        return redirect()->back()->with('message', 'Program studi berhasil ditambahkan');
+        return redirect()->back()->with('message', 'Program Studi berhasil ditambahkan');
     }
 
     public function update(Request $request, $id)

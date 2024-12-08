@@ -62,7 +62,7 @@ export default function Form({
                 onSuccess: () => onClose(),
             });
         } else {
-            post(route('admin.biaya'), {
+            post(route('admin.biaya.store'), {
                 onSuccess: () => onClose(),
             });
         }

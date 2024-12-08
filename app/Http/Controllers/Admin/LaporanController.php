@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\ProgramStudi;
 use App\Models\GelombangPMB;
-use App\Models\Pendaftaran;
+use App\Models\Pendaftar;
 use App\Models\Pembayaran;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,7 +18,7 @@ class LaporanController extends Controller
     public function index(Request $request)
     {
         // Query dasar untuk pendaftar
-        $query = Pendaftaran::query();
+        $query = Pendaftar::query();
 
         // Filter berdasarkan tanggal
         if ($request->tanggal_mulai) {
@@ -30,10 +30,7 @@ class LaporanController extends Controller
 
         // Filter berdasarkan program studi
         if ($request->program_studi_id) {
-            $prodi = ProgramStudi::find($request->program_studi_id);
-            if ($prodi) {
-                $query->where('program_studi', $prodi->nama);
-            }
+            $query->where('program_studi_id', $request->program_studi_id);
         }
 
         // Filter berdasarkan status
@@ -48,23 +45,35 @@ class LaporanController extends Controller
         $total_diterima = $query->where('status_pendaftaran', 'diterima')->count();
 
         // Hitung total pembayaran
-        $total_pembayaran = 0; // Sesuaikan dengan struktur data pembayaran Anda
+        $total_pembayaran = Pembayaran::whereHas('pendaftar', function($query) {
+            $query->where('status_pembayaran', 'lunas');
+        })->sum('jumlah');
 
         // Statistik per program studi
-        $per_prodi = ProgramStudi::all()
-            ->map(function($prodi) use ($query) {
-                $count = $query->where('program_studi', $prodi->nama)->count();
-                $total = $query->count();
-                
-                return [
-                    'nama' => $prodi->nama,
-                    'total' => $count,
-                    'persentase' => $total > 0 ? round(($count / $total) * 100, 1) : 0
-                ];
-            });
+        $per_prodi = ProgramStudi::withCount(['pendaftar' => function($query) {
+            $query->where('status_pendaftaran', 'diterima');
+        }])
+        ->get()
+        ->map(function($prodi) use ($total_pendaftar) {
+            return [
+                'nama' => $prodi->nama,
+                'total' => $prodi->pendaftar_count,
+                'persentase' => $total_pendaftar > 0 ? 
+                    round(($prodi->pendaftar_count / $total_pendaftar) * 100, 1) : 0
+            ];
+        });
 
         // Statistik per gelombang
-        $per_gelombang = collect([]); // Sesuaikan dengan struktur data gelombang Anda
+        $per_gelombang = GelombangPMB::withCount('pendaftar')
+            ->get()
+            ->map(function($gelombang) use ($total_pendaftar) {
+                return [
+                    'nama_gelombang' => $gelombang->nama_gelombang,
+                    'total' => $gelombang->pendaftar_count,
+                    'persentase' => $total_pendaftar > 0 ? 
+                        round(($gelombang->pendaftar_count / $total_pendaftar) * 100, 1) : 0
+                ];
+            });
 
         return Inertia::render('Admin/PMB/Laporan/Index', [
             'statistik' => [
@@ -85,30 +94,11 @@ class LaporanController extends Controller
 
     public function export(Request $request)
     {
-        // Query dasar untuk pendaftar
-        $query = Pendaftaran::query();
-
-        // Terapkan filter yang sama dengan halaman laporan
-        if ($request->tanggal_mulai) {
-            $query->where('created_at', '>=', $request->tanggal_mulai);
-        }
-        if ($request->tanggal_selesai) {
-            $query->where('created_at', '<=', $request->tanggal_selesai);
-        }
-        if ($request->program_studi_id) {
-            $prodi = ProgramStudi::find($request->program_studi_id);
-            if ($prodi) {
-                $query->where('program_studi', $prodi->nama);
-            }
-        }
-        if ($request->status) {
-            $query->where('status_pendaftaran', $request->status);
-        }
-
-        // Ambil data untuk di-export
-        $pendaftar = $query->get();
-
-        // Export ke Excel menggunakan package Laravel Excel
-        return Excel::download(new PendaftarExport($pendaftar), 'laporan-pmb.xlsx');
+        return Excel::download(new PendaftarExport(
+            $request->start_date,
+            $request->end_date,
+            $request->status,
+            $request->jalur_masuk
+        ), 'laporan-pendaftar.xlsx');
     }
 } 

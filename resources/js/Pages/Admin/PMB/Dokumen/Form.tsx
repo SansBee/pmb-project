@@ -49,7 +49,7 @@ export default function Form({ isEdit = false, dokumen, kategori_list, format_li
                 onSuccess: () => onClose(),
             });
         } else {
-            post(route('admin.dokumen'), {
+            post(route('admin.dokumen.store'), {
                 onSuccess: () => onClose(),
             });
         }

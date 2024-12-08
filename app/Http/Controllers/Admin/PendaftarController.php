@@ -3,104 +3,129 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\ProgramStudi;
-use App\Models\Pendaftaran;
+use App\Models\Pendaftar;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class PendaftarController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Pendaftaran::query();
+        try {
+            $query = Pendaftar::with([
+                'user',
+                'programStudi',
+                'jalurMasuk',
+                'gelombang',
+                'dataPribadi'
+            ]);
 
-        if ($request->search) {
-            $query->where(function($q) use ($request) {
-                $q->where('nama_lengkap', 'like', "%{$request->search}%")
-                  ->orWhere('email', 'like', "%{$request->search}%");
-            });
+            // Filter berdasarkan pencarian
+            if ($request->search) {
+                $query->whereHas('dataPribadi', function($q) use ($request) {
+                    $q->where('nama_lengkap', 'like', "%{$request->search}%")
+                      ->orWhere('nik', 'like', "%{$request->search}%");
+                });
+            }
+
+            // Filter berdasarkan status
+            if ($request->status) {
+                $query->where('status', $request->status);
+            }
+
+            $pendaftar = $query->latest()->paginate(10);
+
+            return Inertia::render('Admin/PMB/Pendaftar/Index', [
+                'pendaftar' => $pendaftar,
+                'filters' => $request->only(['search', 'status']),
+                'status_list' => [
+                    'draft' => 'Draft',
+                    'menunggu_dokumen' => 'Menunggu Dokumen',
+                    'verifikasi' => 'Verifikasi',
+                    'menunggu_bayar' => 'Menunggu Pembayaran',
+                    'menunggu_ujian' => 'Menunggu Ujian',
+                    'selesai_ujian' => 'Selesai Ujian',
+                    'lulus' => 'Lulus',
+                    'tidak_lulus' => 'Tidak Lulus'
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in PendaftarController@index: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan. Silakan coba lagi.');
         }
-
-        if ($request->status) {
-            $query->where('status_pendaftaran', $request->status);
-        }
-
-        $pendaftar = $query->latest()
-            ->paginate(10)
-            ->through(function($item) {
-                return [
-                    'id' => $item->id,
-                    'name' => $item->nama_lengkap,
-                    'email' => $item->email,
-                    'program_studi' => [
-                        'nama' => $item->program_studi
-                    ],
-                    'status_pendaftaran' => $item->status_pendaftaran,
-                    'status_pembayaran' => $item->status_pembayaran,
-                    'created_at' => $item->created_at->format('Y-m-d H:i:s')
-                ];
-            });
-
-        return Inertia::render('Admin/PMB/Pendaftar/Index', [
-            'pendaftar' => $pendaftar,
-            'filters' => [
-                'search' => $request->search,
-                'status' => $request->status
-            ],
-            'status_list' => [
-                'baru' => 'Pendaftar Baru',
-                'verifikasi' => 'Sedang Diverifikasi',
-                'diterima' => 'Diterima',
-                'ditolak' => 'Ditolak'
-            ]
-        ]);
     }
 
     public function show($id)
     {
-        $pendaftar = User::with(['programStudi', 'gelombang'])
-            ->findOrFail($id);
+        $pendaftar = Pendaftar::with([
+            'user',
+            'dataPribadi',
+            'dataAkademik',
+            'dataOrangTua',
+            'programStudi',
+            'jalurMasuk',
+            'gelombang',
+            'dokumen',
+            'pembayaran'
+        ])->findOrFail($id);
 
         return Inertia::render('Admin/PMB/Pendaftar/Show', [
-            'pendaftar' => [
-                'id' => $pendaftar->id,
-                'name' => $pendaftar->name,
-                'email' => $pendaftar->email,
-                'program_studi' => $pendaftar->programStudi ? [
-                    'id' => $pendaftar->programStudi->id,
-                    'nama' => $pendaftar->programStudi->nama
-                ] : null,
-                'gelombang' => $pendaftar->gelombang ? [
-                    'id' => $pendaftar->gelombang->id,
-                    'nama_gelombang' => $pendaftar->gelombang->nama_gelombang
-                ] : null,
-                'status_pendaftaran' => $pendaftar->status_pendaftaran ?? 'baru',
-                'status_pembayaran' => $pendaftar->status_pembayaran ?? 'belum_bayar',
-                'created_at' => $pendaftar->created_at->format('Y-m-d H:i:s')
-            ]
+            'pendaftar' => $pendaftar
         ]);
     }
 
-    public function updateStatus(Request $request, $id)
+    public function verifikasiDokumen(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:diterima,ditolak,menunggu'
+            'dokumen_id' => 'required|exists:dokumen_pendaftar,id',
+            'status' => 'required|in:verified,rejected',
+            'catatan' => 'nullable|string'
         ]);
 
-        $pendaftar = User::findOrFail($id);
-        $pendaftar->update([
-            'status_pendaftaran' => $request->status
+        $pendaftar = Pendaftar::findOrFail($id);
+        $dokumen = $pendaftar->dokumen()->findOrFail($request->dokumen_id);
+        
+        $dokumen->update([
+            'status' => $request->status,
+            'catatan' => $request->catatan,
+            'verified_at' => now(),
+            'verified_by' => Auth::id()
         ]);
 
-        return redirect()->back()->with('message', 'Status pendaftar berhasil diupdate');
+        // Update status pendaftar jika semua dokumen terverifikasi
+        if ($request->status === 'verified' && 
+            $pendaftar->dokumen()->where('status', '!=', 'verified')->count() === 0) {
+            $pendaftar->update(['status' => 'menunggu_bayar']);
+        }
+
+        return back()->with('success', 'Dokumen berhasil diverifikasi');
     }
 
-    public function destroy($id)
+    public function verifikasiPembayaran(Request $request, $id)
     {
-        $pendaftar = User::findOrFail($id);
-        $pendaftar->delete();
+        $request->validate([
+            'pembayaran_id' => 'required|exists:pembayaran,id',
+            'status' => 'required|in:verified,rejected',
+            'catatan' => 'nullable|string'
+        ]);
 
-        return redirect()->back()->with('message', 'Data pendaftar berhasil dihapus');
+        $pendaftar = Pendaftar::findOrFail($id);
+        $pembayaran = $pendaftar->pembayaran()->findOrFail($request->pembayaran_id);
+        
+        $pembayaran->update([
+            'status' => $request->status,
+            'catatan' => $request->catatan,
+            'verified_at' => now(),
+            'verified_by' => Auth::id()
+        ]);
+
+        // Update status pendaftar
+        if ($request->status === 'verified') {
+            $pendaftar->update(['status' => 'menunggu_ujian']);
+        }
+
+        return back()->with('success', 'Pembayaran berhasil diverifikasi');
     }
 } 

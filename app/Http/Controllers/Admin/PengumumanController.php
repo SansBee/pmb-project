@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Pengumuman;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\Pendaftar;
+use App\Events\PengumumanKelulusanEvent;
 
 class PengumumanController extends Controller
 {
@@ -48,5 +50,19 @@ class PengumumanController extends Controller
     {
         $pengumuman->delete();
         return redirect()->back()->with('message', 'Pengumuman berhasil dihapus');
+    }
+
+    public function announceResults(Request $request)
+    {
+        $pendaftar = Pendaftar::findOrFail($request->pendaftar_id);
+        $pendaftar->update([
+            'status_pendaftaran' => $request->status, // diterima/ditolak
+            'keterangan' => $request->keterangan
+        ]);
+
+        // Kirim notifikasi ke pendaftar
+        event(new PengumumanKelulusanEvent($pendaftar));
+
+        return redirect()->back()->with('message', 'Status pendaftaran berhasil diupdate');
     }
 } 

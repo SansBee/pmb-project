@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class GelombangPMB extends Model
 {
@@ -14,20 +15,18 @@ class GelombangPMB extends Model
         'tanggal_selesai',
         'kuota',
         'biaya',
-        'is_active'
+        'is_active',
+        'aktif'
     ];
 
     protected $casts = [
         'tanggal_mulai' => 'date',
         'tanggal_selesai' => 'date',
-        'is_active' => 'boolean',
-        'kuota' => 'integer',
-        'biaya' => 'integer'
+        'aktif' => 'boolean'
     ];
 
-    // Tambahkan relasi ke pendaftar
-    public function pendaftar()
+    public function pendaftar(): HasMany
     {
-        return $this->hasMany(User::class, 'gelombang_id');
+        return $this->hasMany(Pendaftar::class, 'gelombang_id');
     }
 } 

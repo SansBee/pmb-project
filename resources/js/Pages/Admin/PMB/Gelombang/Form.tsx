@@ -38,7 +38,7 @@ export default function Form({ isEdit = false, gelombang, onClose }: Props) {
                 }
             });
         } else {
-            post(route('admin.gelombang'), {
+            post(route('admin.gelombang.store'), {
                 onSuccess: () => {
                     onClose();
                 },

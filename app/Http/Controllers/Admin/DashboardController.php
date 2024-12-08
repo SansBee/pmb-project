@@ -5,51 +5,49 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\ProgramStudi;
-use App\Models\Pendaftaran;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
+use App\Models\GelombangPMB;
+use App\Models\Pendaftar;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        // Hitung total user yang bisa login (termasuk admin)
-        $total_user = User::count();
+        try {
+            // Statistik umum
+            $stats = [
+                'total_user' => User::count(),
+                'user_baru' => User::whereDate('created_at', today())->count(),
+                'total_pendaftar' => Pendaftar::count(),
+                'pendaftar_baru' => Pendaftar::whereDate('created_at', today())->count(),
+                'pendaftar_jalur_prestasi' => Pendaftar::where('jalur_masuk_id', 1)->count(),
+                'pendaftar_jalur_reguler' => Pendaftar::where('jalur_masuk_id', 2)->count(),
+                'total_terverifikasi' => Pendaftar::where('status_pendaftaran', 'terverifikasi')->count(),
+                'total_diterima' => Pendaftar::where('status_pendaftaran', 'diterima')->count(),
+                'total_ditolak' => Pendaftar::where('status_pendaftaran', 'ditolak')->count(),
+                'total_sudah_bayar' => Pendaftar::where('status_pembayaran', 'lunas')->count(),
+                'total_belum_bayar' => Pendaftar::where('status_pembayaran', 'belum_bayar')->count(),
+            ];
 
-        // Hitung user baru yang register dalam 7 hari terakhir
-        $user_baru = User::where('created_at', '>=', Carbon::now()->subDays(7))->count();
+            // Tren pendaftaran 7 hari terakhir
+            $tren_pendaftaran = Pendaftar::selectRaw('DATE(created_at) as date, COUNT(*) as total')
+                ->where('created_at', '>=', now()->subDays(7))
+                ->groupBy('date')
+                ->orderBy('date')
+                ->get();
 
-        // Hitung total pendaftar PMB (dari tabel pendaftaran)
-        $total_pendaftar = Pendaftaran::count();
-
-        // Hitung pendaftar PMB baru dalam 7 hari terakhir
-        $pendaftar_baru = Pendaftaran::where('created_at', '>=', Carbon::now()->subDays(7))
-            ->count();
-
-        // Statistik per program studi
-        $stats_prodi = ProgramStudi::all()
-            ->map(function($prodi) {
-                $count = Pendaftaran::where('program_studi', $prodi->nama)->count();
-                $total_pendaftar = Pendaftaran::count();
-                
-                return [
-                    'nama' => $prodi->nama,
-                    'total' => $count,
-                    'persentase' => $total_pendaftar > 0 
-                        ? round(($count / $total_pendaftar) * 100, 1)
-                        : 0
-                ];
-            });
-
-        return Inertia::render('Admin/Dashboard/Index', [
-            'stats' => [
-                'total_user' => $total_user,        // Total user yang bisa login
-                'user_baru' => $user_baru,          // User baru yang register
-                'total_pendaftar' => $total_pendaftar,  // Total dari tabel pendaftaran
-                'pendaftar_baru' => $pendaftar_baru    // Pendaftar baru dari tabel pendaftaran
-            ],
-            'stats_prodi' => $stats_prodi
-        ]);
+            return Inertia::render('Admin/Dashboard/Index', [
+                'stats' => $stats,
+                'tren_pendaftaran' => [
+                    'labels' => $tren_pendaftaran->pluck('date')->map(fn($date) => Carbon::parse($date)->format('d M')),
+                    'data' => $tren_pendaftaran->pluck('total')
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Dashboard Error: ' . $e->getMessage());
+            throw $e;
+        }
     }
 } 

@@ -35,14 +35,9 @@ export default function ProgramStudiIndex({ program_studi }: Props) {
 
     const confirmDelete = () => {
         if (itemToDelete) {
-            router.delete(route('admin.prodi.destroy', itemToDelete), {
-                preserveScroll: true,
-                preserveState: true,
-                onSuccess: () => {
-                    setDeleteConfirmation(false);
-                    setItemToDelete(null);
-                }
-            });
+            router.delete(route('admin.program-studi.destroy', itemToDelete));
+            setDeleteConfirmation(false);
+            setItemToDelete(null);
         }
     };
 

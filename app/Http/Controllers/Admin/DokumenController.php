@@ -5,7 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PersyaratanDokumen;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use App\Models\Dokumen;
+use App\Notifications\DokumenVerified;
+use Illuminate\Support\Facades\Auth;
 
 class DokumenController extends Controller
 {
@@ -107,14 +111,38 @@ class DokumenController extends Controller
         $request->validate([
             'updates' => 'required|array',
             'updates.*.id' => 'required|exists:persyaratan_dokumen,id',
-            'updates.*.urutan' => 'required|integer|min:0'
+            'updates.*.urutan' => 'required|integer|min:1'
         ]);
 
-        foreach ($request->updates as $item) {
-            PersyaratanDokumen::where('id', $item['id'])
-                ->update(['urutan' => $item['urutan']]);
-        }
+        // Gunakan transaction untuk memastikan semua update berhasil
+        DB::transaction(function() use ($request) {
+            // Ambil dokumen pertama untuk mendapatkan kategorinya
+            $firstDoc = PersyaratanDokumen::find($request->updates[0]['id']);
+            $kategori = $firstDoc->kategori;
+            
+            // Update urutan untuk setiap dokumen
+            foreach ($request->updates as $item) {
+                PersyaratanDokumen::where('id', $item['id'])
+                    ->where('kategori', $kategori) // Pastikan hanya update dokumen dalam kategori yang sama
+                    ->update(['urutan' => $item['urutan']]);
+            }
+        });
 
-        return redirect()->back()->with('message', 'Urutan berhasil diupdate');
+        return back()->with('message', 'Urutan berhasil diperbarui');
+    }
+
+    public function verify($id)
+    {
+        $dokumen = Dokumen::findOrFail($id);
+        $dokumen->update([
+            'status' => 'verified',
+            'verified_at' => now(),
+            'verified_by' => Auth::id()
+        ]);
+
+        // Kirim notifikasi ke pendaftar
+        $dokumen->pendaftar->notify(new DokumenVerified($dokumen));
+
+        return redirect()->back()->with('message', 'Dokumen berhasil diverifikasi');
     }
 } 
