@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pendaftar;
+use App\Models\DokumenPendaftar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -61,13 +62,13 @@ class PendaftarController extends Controller
     {
         $pendaftar = Pendaftar::with([
             'user',
-            'dataPribadi',
-            'dataAkademik',
-            'dataOrangTua',
             'programStudi',
             'jalurMasuk',
             'gelombang',
-            'dokumen',
+            'dataPribadi',
+            'dataAkademik',
+            'dataOrangTua',
+            'dokumen.persyaratanDokumen',
             'pembayaran'
         ])->findOrFail($id);
 
@@ -79,53 +80,49 @@ class PendaftarController extends Controller
     public function verifikasiDokumen(Request $request, $id)
     {
         $request->validate([
-            'dokumen_id' => 'required|exists:dokumen_pendaftar,id',
-            'status' => 'required|in:verified,rejected',
-            'catatan' => 'nullable|string'
+            'status' => 'required|in:verified,rejected'
         ]);
 
-        $pendaftar = Pendaftar::findOrFail($id);
-        $dokumen = $pendaftar->dokumen()->findOrFail($request->dokumen_id);
-        
+        $dokumen = DokumenPendaftar::findOrFail($id);
         $dokumen->update([
             'status' => $request->status,
-            'catatan' => $request->catatan,
             'verified_at' => now(),
             'verified_by' => Auth::id()
         ]);
 
-        // Update status pendaftar jika semua dokumen terverifikasi
-        if ($request->status === 'verified' && 
-            $pendaftar->dokumen()->where('status', '!=', 'verified')->count() === 0) {
-            $pendaftar->update(['status' => 'menunggu_bayar']);
-        }
-
-        return back()->with('success', 'Dokumen berhasil diverifikasi');
+        return response()->json(['message' => 'Dokumen berhasil diverifikasi']);
     }
 
     public function verifikasiPembayaran(Request $request, $id)
     {
         $request->validate([
-            'pembayaran_id' => 'required|exists:pembayaran,id',
-            'status' => 'required|in:verified,rejected',
-            'catatan' => 'nullable|string'
+            'status' => 'required|in:verified,rejected'
         ]);
 
-        $pendaftar = Pendaftar::findOrFail($id);
-        $pembayaran = $pendaftar->pembayaran()->findOrFail($request->pembayaran_id);
-        
-        $pembayaran->update([
-            'status' => $request->status,
-            'catatan' => $request->catatan,
-            'verified_at' => now(),
-            'verified_by' => Auth::id()
-        ]);
+        try {
+            $pendaftar = Pendaftar::findOrFail($id);
+            $pembayaran = $pendaftar->pembayaran;
+            
+            $pembayaran->update([
+                'status' => $request->status,
+                'verified_at' => now(),
+                'verified_by' => Auth::id()
+            ]);
 
-        // Update status pendaftar
-        if ($request->status === 'verified') {
-            $pendaftar->update(['status' => 'menunggu_ujian']);
+            if ($request->status === 'verified') {
+                $pendaftar->update([
+                    'status' => 'menunggu_ujian',
+                    'status_pembayaran' => 'verified'
+                ]);
+            } else {
+                $pendaftar->update([
+                    'status_pembayaran' => 'rejected'
+                ]);
+            }
+
+            return back()->with('success', 'Pembayaran berhasil diverifikasi');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal memverifikasi pembayaran');
         }
-
-        return back()->with('success', 'Pembayaran berhasil diverifikasi');
     }
 } 

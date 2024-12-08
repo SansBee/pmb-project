@@ -1,44 +1,52 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, router } from '@inertiajs/react';
 import { toast } from 'react-hot-toast';
 import VerificationModal from '@/Components/VerificationModal';
 import { DocumentIcon, CheckIcon, XMarkIcon } from '@heroicons/react/20/solid';
+import axios from 'axios';
 
-interface Props {
-    pendaftar: {
-        id: number;
-        name: string;
-        email: string;
-        program_studi: {
-            id: number;
-            nama: string;
-        } | null;
-        gelombang: {
-            id: number;
-            nama_gelombang: string;
-        } | null;
-        dokumen: Array<{
-            id: number;
-            nama_dokumen: string;
-            file_url: string;
-            status: 'pending' | 'verified' | 'rejected';
-            catatan?: string;
-        }>;
-        pembayaran: {
-            id: number;
-            jumlah: number;
-            bukti_pembayaran: string;
-            status: 'pending' | 'verified' | 'rejected';
-            catatan?: string;
-        };
-        status_pendaftaran: string;
-        status_pembayaran: string;
-        created_at: string;
-    };
+interface PersyaratanDokumen {
+  id: number;
+  nama_dokumen: string;
 }
 
-export default function Show({ pendaftar }: Props) {
+interface Dokumen {
+  id: number;
+  status: string;
+  path: string;
+  catatan?: string;
+  persyaratan_dokumen: PersyaratanDokumen;
+}
+
+interface Pendaftar {
+  id: number;
+  name: string;
+  email: string;
+  program_studi: {
+    id: number;
+    nama: string;
+  } | null;
+  gelombang: {
+    id: number;
+    nama_gelombang: string;
+  } | null;
+  dokumen: Dokumen[];
+  pembayaran: {
+    id: number;
+    jumlah: number;
+    bukti_pembayaran: string;
+    status: 'pending' | 'verified' | 'rejected';
+    catatan?: string;
+  };
+  status: string;
+  status_pendaftaran: string;
+  status_pembayaran: string;
+  created_at: string;
+}
+
+export default function Show({ pendaftar: initialPendaftar }: { pendaftar: Pendaftar }) {
+    const [pendaftar, setPendaftar] = useState<Pendaftar>(initialPendaftar);
     const [verifyingDokumen, setVerifyingDokumen] = React.useState<number | null>(null);
     const [verifyingPembayaran, setVerifyingPembayaran] = React.useState<number | null>(null);
 
@@ -68,6 +76,67 @@ export default function Show({ pendaftar }: Props) {
             },
             onError: () => toast.error('Gagal memverifikasi pembayaran')
         });
+    };
+
+    const handleLihatDokumen = (path: string) => {
+        console.log('Document path:', path);
+        window.open(`/storage/${path}`, '_blank');
+    };
+
+    const handleLihatBuktiPembayaran = (buktiPath: string) => {
+        console.log('Original buktiPath:', buktiPath);
+        
+        // Hapus prefix 'pembayaran/' jika ada
+        const cleanPath = buktiPath.replace(/^pembayaran\//, '');
+        console.log('Clean path:', cleanPath);
+        
+        const url = `/storage/public/pembayaran/${cleanPath}`;
+        console.log('Final URL:', url);
+        
+        window.open(url, '_blank');
+    };
+
+    const handleVerifikasiDokumen = async (dokumenId: number, status: 'verified' | 'rejected') => {
+        try {
+            await axios.post(`/admin/pendaftar/dokumen/${dokumenId}/verifikasi`, { status });
+            // Update state setelah verifikasi berhasil
+            setPendaftar((prev: Pendaftar) => ({
+                ...prev,
+                dokumen: prev.dokumen.map((dok: Dokumen) => 
+                    dok.id === dokumenId ? { ...dok, status } : dok
+                )
+            }));
+        } catch (error) {
+            console.error('Error verifying document:', error);
+        }
+    };
+
+    const handleVerifikasiPembayaran = async (pembayaranId: number, status: 'verified' | 'rejected') => {
+        try {
+            router.post(route('admin.pendaftar.verifikasi-pembayaran', pendaftar.id), {
+                pembayaran_id: pembayaranId,
+                status: status
+            }, {
+                onSuccess: () => {
+                    setPendaftar(prev => ({
+                        ...prev,
+                        pembayaran: {
+                            ...prev.pembayaran,
+                            status: status
+                        },
+                        status_pembayaran: status,
+                        status: status === 'verified' ? 'menunggu_ujian' : prev.status
+                    }));
+                    toast.success('Pembayaran berhasil diverifikasi');
+                },
+                onError: () => {
+                    toast.error('Gagal memverifikasi pembayaran');
+                }
+            });
+        } catch (error) {
+            console.error('Error verifying payment:', error);
+            toast.error('Gagal memverifikasi pembayaran');
+        }
     };
 
     return (
@@ -126,7 +195,7 @@ export default function Show({ pendaftar }: Props) {
                                 {pendaftar.dokumen.map(doc => (
                                     <div key={doc.id} className="py-4 flex items-center justify-between">
                                         <div>
-                                            <p className="font-medium">{doc.nama_dokumen}</p>
+                                            <p className="font-medium">{doc.persyaratan_dokumen.nama_dokumen}</p>
                                             <div className="mt-1 flex items-center space-x-2">
                                                 <StatusBadge status={doc.status} />
                                                 {doc.catatan && (
@@ -136,7 +205,7 @@ export default function Show({ pendaftar }: Props) {
                                         </div>
                                         <div className="flex items-center space-x-3">
                                             <button 
-                                                onClick={() => window.open(doc.file_url)}
+                                                onClick={() => handleLihatDokumen(doc.path)}
                                                 className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800"
                                             >
                                                 <DocumentIcon className="h-4 w-4 mr-1.5" />
@@ -145,14 +214,14 @@ export default function Show({ pendaftar }: Props) {
                                             {doc.status === 'pending' && (
                                                 <div className="flex space-x-2">
                                                     <button 
-                                                        onClick={() => setVerifyingDokumen(doc.id)}
+                                                        onClick={() => handleVerifikasiDokumen(doc.id, 'verified')}
                                                         className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-green-600 hover:text-green-800"
                                                     >
                                                         <CheckIcon className="h-4 w-4 mr-1.5" />
                                                         Terima
                                                     </button>
                                                     <button 
-                                                        onClick={() => setVerifyingDokumen(doc.id)}
+                                                        onClick={() => handleVerifikasiDokumen(doc.id, 'rejected')}
                                                         className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-800"
                                                     >
                                                         <XMarkIcon className="h-4 w-4 mr-1.5" />
@@ -190,7 +259,7 @@ export default function Show({ pendaftar }: Props) {
                                     </div>
                                     <div className="flex items-center space-x-3">
                                         <button 
-                                            onClick={() => window.open(pendaftar.pembayaran.bukti_pembayaran)}
+                                            onClick={() => handleLihatBuktiPembayaran(pendaftar.pembayaran.bukti_pembayaran)}
                                             className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800"
                                         >
                                             <DocumentIcon className="h-4 w-4 mr-1.5" />
@@ -199,14 +268,14 @@ export default function Show({ pendaftar }: Props) {
                                         {pendaftar.pembayaran.status === 'pending' && (
                                             <div className="flex space-x-2">
                                                 <button 
-                                                    onClick={() => setVerifyingPembayaran(pendaftar.pembayaran.id)}
+                                                    onClick={() => handleVerifikasiPembayaran(pendaftar.pembayaran.id, 'verified')}
                                                     className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-green-600 hover:text-green-800"
                                                 >
                                                     <CheckIcon className="h-4 w-4 mr-1.5" />
                                                     Terima
                                                 </button>
                                                 <button 
-                                                    onClick={() => setVerifyingPembayaran(pendaftar.pembayaran.id)}
+                                                    onClick={() => handleVerifikasiPembayaran(pendaftar.pembayaran.id, 'rejected')}
                                                     className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-800"
                                                 >
                                                     <XMarkIcon className="h-4 w-4 mr-1.5" />

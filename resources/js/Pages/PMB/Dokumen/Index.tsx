@@ -1,44 +1,49 @@
-import React from 'react';
-import { Head, router } from '@inertiajs/react';
+import React, { useState, useEffect } from 'react';
+import { Head } from '@inertiajs/react';
 import PMBLayout from '@/Layouts/PMBLayout';
-import { toast } from 'react-hot-toast';
+import axios from 'axios';
+import { usePage } from '@inertiajs/react';
 
-interface Props {
-    auth: {
-        user: {
-            id: number;
-            name: string;
-            email: string;
-        };
-    };
-    pendaftar: {
-        id: number;
-        dokumen: Array<{
-            id: number;
-            nama_dokumen: string;
-            file_path: string;
-            status: string;
-            catatan?: string;
-        }>;
-    };
+interface PersyaratanDokumen {
+    id: number;
+    nama_dokumen: string;
+    deskripsi: string;
+    kategori: string;
+    format_file: string;
+    max_size: number;
+    size_type: string;
+    format_helper: string;
+    is_wajib: boolean;
 }
 
-export default function Dokumen({ auth, pendaftar }: Props) {
-    const handleUpload = (e: React.ChangeEvent<HTMLInputElement>, jenisDokumen: string) => {
-        if (!e.target.files?.length) return;
+export default function DokumenIndex() {
+    const { auth } = usePage().props;
+    const [dokumen, setDokumen] = useState<PersyaratanDokumen[]>([]);
+    const [uploadStatus, setUploadStatus] = useState<{ [key: number]: string }>({});
+
+    useEffect(() => {
+        axios.get('/api/persyaratan-dokumen')
+            .then(response => {
+                setDokumen(response.data);
+            });
+    }, []);
+
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, dokumenId: number) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
 
         const formData = new FormData();
-        formData.append('jenis_dokumen', jenisDokumen);
-        formData.append('file', e.target.files[0]);
+        formData.append('persyaratan_dokumen_id', dokumenId.toString());
+        formData.append('file', file);
 
-        router.post(route('pmb.dokumen.upload'), formData, {
-            onSuccess: () => {
-                toast.success('Dokumen berhasil diupload');
-            },
-            onError: () => {
-                toast.error('Gagal mengupload dokumen');
-            }
-        });
+        try {
+            setUploadStatus(prev => ({ ...prev, [dokumenId]: 'uploading' }));
+            await axios.post('/api/upload-dokumen', formData);
+            setUploadStatus(prev => ({ ...prev, [dokumenId]: 'success' }));
+        } catch (error) {
+            setUploadStatus(prev => ({ ...prev, [dokumenId]: 'error' }));
+            console.error('Upload error:', error);
+        }
     };
 
     return (
@@ -47,58 +52,67 @@ export default function Dokumen({ auth, pendaftar }: Props) {
 
             <div className="py-12">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                    <div className="bg-white overflow-hidden shadow-sm rounded-lg">
+                    <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div className="p-6">
-                            <h2 className="text-lg font-medium mb-4">Upload Dokumen</h2>
-
-                            {/* Form Upload KTP */}
-                            <div className="mb-6">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    KTP
-                                </label>
-                                <input
-                                    type="file"
-                                    onChange={(e) => handleUpload(e, 'ktp')}
-                                    className="mt-1 block w-full"
-                                    accept=".jpg,.jpeg,.png,.pdf"
-                                />
-                            </div>
-
-                            {/* Form Upload Ijazah */}
-                            <div className="mb-6">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Ijazah
-                                </label>
-                                <input
-                                    type="file"
-                                    onChange={(e) => handleUpload(e, 'ijazah')}
-                                    className="mt-1 block w-full"
-                                    accept=".jpg,.jpeg,.png,.pdf"
-                                />
-                            </div>
-
-                            {/* Form Upload Foto */}
-                            <div className="mb-6">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Pas Foto
-                                </label>
-                                <input
-                                    type="file"
-                                    onChange={(e) => handleUpload(e, 'foto')}
-                                    className="mt-1 block w-full"
-                                    accept=".jpg,.jpeg,.png"
-                                />
-                            </div>
-
-                            <div className="mt-6">
-                                <button
-                                    type="button"
-                                    onClick={() => router.visit(route('pmb.pembayaran'))}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                                >
-                                    Lanjut ke Pembayaran
-                                </button>
-                            </div>
+                            <h2 className="text-lg font-semibold mb-6">Upload Dokumen Persyaratan</h2>
+                            
+                            {/* Grup dokumen berdasarkan kategori */}
+                            {Object.entries(
+                                dokumen.reduce((acc, doc) => {
+                                    acc[doc.kategori] = [...(acc[doc.kategori] || []), doc];
+                                    return acc;
+                                }, {} as { [key: string]: PersyaratanDokumen[] })
+                            ).map(([kategori, dokumenList]) => (
+                                <div key={kategori} className="mb-8">
+                                    <h3 className="text-md font-medium mb-4">{kategori}</h3>
+                                    <div className="space-y-4">
+                                        {dokumenList.map(doc => (
+                                            <div key={doc.id} className="border rounded-lg p-4">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <h4 className="font-medium">
+                                                            {doc.nama_dokumen}
+                                                            {doc.is_wajib && <span className="text-red-500 ml-1">*</span>}
+                                                        </h4>
+                                                        <p className="text-sm text-gray-500">{doc.deskripsi}</p>
+                                                        <p className="text-xs text-gray-400 mt-1">
+                                                            Format: {doc.format_file} 
+                                                            {doc.max_size && ` (Maks. ${doc.max_size} ${doc.size_type})`}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <input
+                                                            type="file"
+                                                            id={`dokumen-${doc.id}`}
+                                                            className="hidden"
+                                                            onChange={(e) => handleUpload(e, doc.id)}
+                                                        />
+                                                        <label
+                                                            htmlFor={`dokumen-${doc.id}`}
+                                                            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 cursor-pointer"
+                                                        >
+                                                            Upload
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                {uploadStatus[doc.id] && (
+                                                    <div className="mt-2">
+                                                        {uploadStatus[doc.id] === 'uploading' && (
+                                                            <p className="text-yellow-600">Sedang mengupload...</p>
+                                                        )}
+                                                        {uploadStatus[doc.id] === 'success' && (
+                                                            <p className="text-green-600">Upload berhasil</p>
+                                                        )}
+                                                        {uploadStatus[doc.id] === 'error' && (
+                                                            <p className="text-red-600">Gagal upload</p>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>

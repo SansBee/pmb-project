@@ -31,6 +31,13 @@ export default function PembayaranIndex({ pembayaran }: Props) {
     const [showForm, setShowForm] = useState(false);
     const [editData, setEditData] = useState<Pembayaran | null>(null);
 
+    const handleLihatBuktiPembayaran = (buktiPath: string) => {
+        // Hapus prefix 'pembayaran/' jika ada
+        const filename = buktiPath.split('/').pop();
+        // Gunakan route yang baru
+        window.open(route('admin.pembayaran.bukti', filename), '_blank');
+    };
+
     return (
         <AdminLayout>
             <Head title="Pembayaran - Admin" />
@@ -122,13 +129,12 @@ export default function PembayaranIndex({ pembayaran }: Props) {
                                                     >
                                                         Verifikasi
                                                     </button>
-                                                    <a 
-                                                        href={item.bukti_pembayaran}
-                                                        target="_blank"
+                                                    <button 
+                                                        onClick={() => handleLihatBuktiPembayaran(item.bukti_pembayaran)}
                                                         className="text-blue-600 hover:text-blue-900"
                                                     >
                                                         Bukti
-                                                    </a>
+                                                    </button>
                                                 </td>
                                             </tr>
                                         ))}

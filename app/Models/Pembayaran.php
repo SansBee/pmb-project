@@ -11,18 +11,24 @@ class Pembayaran extends Model
 
     protected $fillable = [
         'pendaftar_id',
-        'metode_pembayaran',
         'jumlah',
+        'metode_pembayaran',
         'bukti_pembayaran',
         'status',
         'catatan',
-        'verified_by',
-        'verified_at'
+        'verified_at',
+        'verified_by'
     ];
 
     protected $casts = [
         'jumlah' => 'decimal:2',
         'verified_at' => 'datetime'
+    ];
+
+    const STATUS = [
+        'pending' => 'Menunggu Verifikasi',
+        'verified' => 'Terverifikasi',
+        'rejected' => 'Ditolak'
     ];
 
     public function pendaftar(): BelongsTo

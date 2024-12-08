@@ -73,4 +73,9 @@ class Pendaftar extends Model
     {
         return $this->hasMany(DokumenPendaftar::class);
     }
+
+    public function pembayaran(): HasOne
+    {
+        return $this->hasOne(Pembayaran::class);
+    }
 }

@@ -89,9 +89,15 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/pendaftar', [PendaftarController::class, 'index'])->name('admin.pendaftar');
     Route::get('/pendaftar/{id}', [PendaftarController::class, 'show'])->name('admin.pendaftar.show');
 
-    // Pembayaran
-    Route::get('/pembayaran', [PembayaranController::class, 'index'])->name('admin.pembayaran');
-    Route::put('/pembayaran/{id}', [PembayaranController::class, 'update'])->name('admin.pembayaran.update');
+    // Pembayaran - Pindahkan route bukti ke ATAS
+    Route::get('/pembayaran/bukti/{filename}', [PembayaranController::class, 'showBukti'])
+        ->name('admin.pembayaran.bukti');
+        
+    Route::get('/pembayaran', [PembayaranController::class, 'index'])
+        ->name('admin.pembayaran');
+        
+    Route::put('/pembayaran/{id}', [PembayaranController::class, 'update'])
+        ->name('admin.pembayaran.update');
 
     // Laporan
     Route::get('/laporan', [LaporanController::class, 'index'])->name('admin.laporan');
@@ -128,6 +134,9 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::post('/berita', [BeritaController::class, 'store'])->name('admin.berita.store');
     Route::put('/berita/{id}', [BeritaController::class, 'update'])->name('admin.berita.update');
     Route::delete('/berita/{id}', [BeritaController::class, 'destroy'])->name('admin.berita.destroy');
+
+    Route::post('/pendaftar/dokumen/{id}/verifikasi', [PendaftarController::class, 'verifikasiDokumen']);
+    Route::post('/admin/pendaftar/pembayaran/{id}/verifikasi', [PendaftarController::class, 'verifikasiPembayaran'])->name('admin.pendaftar.verifikasi-pembayaran');
 });
 
 // Route untuk user biasa

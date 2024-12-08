@@ -12,28 +12,45 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\PendaftarExport;
+use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 
 class LaporanController extends Controller
 {
     public function index()
     {
-        $stats = [
-            'per_jalur' => Pendaftar::selectRaw('jalur_masuk_id, count(*) as total')
-                ->groupBy('jalur_masuk_id')
-                ->with('jalurMasuk')
-                ->get(),
-            'per_prodi' => Pendaftar::selectRaw('program_studi_id, count(*) as total')
-                ->groupBy('program_studi_id')
-                ->with('programStudi')
-                ->get(),
-            'per_status' => Pendaftar::selectRaw('status_pendaftaran, count(*) as total')
-                ->groupBy('status_pendaftaran')
-                ->get()
-        ];
+        try {
+            $laporan = [
+                'total_pendaftar' => Pendaftar::count(),
+                'total_pembayaran' => Pembayaran::where('status', 'verified')->sum('jumlah'),
+                'pendaftar_per_prodi' => ProgramStudi::withCount('pendaftar')
+                    ->get()
+                    ->map(fn($prodi) => [
+                        'nama_prodi' => $prodi->nama,
+                        'total' => $prodi->pendaftar_count
+                    ])->values()->all(),
+                'pendaftar_per_gelombang' => GelombangPMB::withCount('pendaftar')
+                    ->get()
+                    ->map(fn($gelombang) => [
+                        'nama_gelombang' => $gelombang->nama_gelombang,
+                        'total' => $gelombang->pendaftar_count
+                    ])->values()->all()
+            ];
 
-        return Inertia::render('Admin/PMB/Laporan/Index', [
-            'stats' => $stats
-        ]);
+            return Inertia::render('Admin/PMB/Laporan/Index', [
+                'laporan' => $laporan
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in LaporanController@index: ' . $e->getMessage());
+            return Inertia::render('Admin/PMB/Laporan/Index', [
+                'laporan' => [
+                    'total_pendaftar' => 0,
+                    'total_pembayaran' => 0,
+                    'pendaftar_per_prodi' => [],
+                    'pendaftar_per_gelombang' => []
+                ]
+            ]);
+        }
     }
 
     public function export(Request $request)
@@ -44,5 +61,18 @@ class LaporanController extends Controller
             $request->status,
             $request->jalur_masuk
         ), 'laporan-pendaftar.xlsx');
+    }
+
+    public function exportPDF()
+    {
+        $laporan = [
+            'total_pendaftar' => Pendaftar::count(),
+            'total_pembayaran' => Pembayaran::where('status', 'verified')->sum('jumlah'),
+            'pendaftar_per_prodi' => ProgramStudi::withCount('pendaftar')->get(),
+            'pendaftar_per_gelombang' => GelombangPMB::withCount('pendaftar')->get()
+        ];
+
+        $pdf = PDF::loadView('pdf.laporan-pmb', compact('laporan'));
+        return $pdf->download('laporan-pmb.pdf');
     }
 } 

@@ -85,4 +85,15 @@ class PembayaranController extends Controller
 
         return redirect()->back()->with('message', 'Pembayaran berhasil diverifikasi');
     }
+
+    public function showBukti($filename)
+    {
+        $path = storage_path('app/public/pembayaran/' . $filename);
+        
+        if (!file_exists($path)) {
+            abort(404);
+        }
+        
+        return response()->file($path);
+    }
 } 
